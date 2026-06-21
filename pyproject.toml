@@ -1,0 +1,41 @@
+[project]
+name = "readmission-risk-ml"
+version = "0.1.0"
+description = "Prédiction de réadmission hospitalière à 30 jours (diabète) — projet ML/DS avec validation rigoureuse et MLOps"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    # --- Étape 1 : socle data science ---
+    "pandas>=2.2",            # manipulation tabulaire
+    "numpy>=1.26",            # calcul numérique
+    "scikit-learn>=1.5",      # modélisation, pipelines, validation
+    "pyarrow>=16.0",          # lecture/écriture Parquet (format colonnaire)
+    "pydantic-settings>=2.3", # configuration typée via .env
+    "structlog>=24.1",        # logs structurés
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.5",      # linter + formatter
+    "pytest>=8.2",    # tests
+]
+
+[build-system]
+requires = ["uv_build>=0.11.19,<0.12.0"]
+build-backend = "uv_build"
+
+# On force le nom du module construit (le projet s'appelle readmission-risk-ml,
+# mais notre paquet Python est readmission_risk).
+[tool.uv.build-backend]
+module-name = "readmission_risk"
+module-root = "src"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

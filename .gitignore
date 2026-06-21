@@ -1,0 +1,36 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Secrets / config locale
+.env
+
+# Données (volumineuses, non versionnées) — on garde le dossier vide
+data/*
+!data/.gitkeep
+
+# Modèles entraînés
+models/*
+!models/.gitkeep
+
+# Rapports générés (EDA, drift, SHAP...)
+reports/*
+!reports/.gitkeep
+
+# Suivi d'expériences MLflow
+mlruns/
+
+# Caches outils
+.ruff_cache/
+.pytest_cache/
+
+# journal
+journal/*
+
