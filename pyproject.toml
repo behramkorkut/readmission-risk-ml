@@ -12,7 +12,13 @@ dependencies = [
     "pyarrow>=16.0",          # lecture/écriture Parquet (format colonnaire)
     "pydantic-settings>=2.3", # configuration typée via .env
     "structlog>=24.1",        # logs structurés
+    # --- Étape 2 : ingestion + validation ---
+    "ucimlrepo>=0.0.7",       # téléchargement reproductible du dataset UCI
+    "pandera>=0.20",          # schéma de validation (contrat de données)
 ]
+
+[project.scripts]
+readmission-ingest = "readmission_risk.data.ingest:main"
 
 [dependency-groups]
 dev = [
