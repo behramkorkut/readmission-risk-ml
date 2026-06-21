@@ -19,6 +19,7 @@ dependencies = [
 
 [project.scripts]
 readmission-ingest = "readmission_risk.data.ingest:main"
+readmission-clean = "readmission_risk.data.clean:main"
 
 [dependency-groups]
 dev = [

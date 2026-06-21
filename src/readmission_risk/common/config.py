@@ -30,8 +30,12 @@ class Settings(BaseSettings):
     # --- Données / cible ---
     # Cible métier : réadmission à moins de 30 jours (classe positive).
     raw_filename: str = "diabetic_data.parquet"
+    clean_filename: str = "diabetic_clean.parquet"
     target_col: str = "readmitted_30d"
     patient_id_col: str = "patient_nbr"  # clé de regroupement anti-fuite
+
+    # --- Split ---
+    test_size: float = 0.2  # part du jeu de test (hold-out), patient-disjoint
 
     # --- MLflow (utilisé à partir de l'étape 5) ---
     mlflow_tracking_uri: str = "file:./mlruns"
