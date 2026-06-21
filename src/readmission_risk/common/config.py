@@ -38,7 +38,8 @@ class Settings(BaseSettings):
     test_size: float = 0.2  # part du jeu de test (hold-out), patient-disjoint
 
     # --- MLflow (utilisé à partir de l'étape 5) ---
-    mlflow_tracking_uri: str = "file:./mlruns"
+    # Backend SQLite : le backend « fichier » (./mlruns) est déprécié en MLflow 3.x.
+    mlflow_tracking_uri: str = "sqlite:///mlflow.db"
     experiment_name: str = "readmission-30d"
 
 

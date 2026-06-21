@@ -34,3 +34,7 @@ mlruns/
 # journal
 journal/*
 
+
+# MLflow (backend SQLite + artefacts)
+mlflow.db
+mlartifacts/
