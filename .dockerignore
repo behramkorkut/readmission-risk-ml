@@ -1,0 +1,21 @@
+# Environnements et caches (recréés dans l'image)
+.venv/
+__pycache__/
+*.py[oc]
+.ruff_cache/
+.pytest_cache/
+
+# Données brutes/volumineuses et expériences (pas nécessaires à l'API)
+data/
+mlflow.db
+mlruns/
+mlartifacts/
+reports/
+
+# Versioning et CI
+.git/
+.github/
+journal/
+
+# NB : on GARDE models/ (le model.joblib est embarqué dans l'image)
+# et README.md (requis par le build du paquet).
