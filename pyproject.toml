@@ -29,6 +29,8 @@ dependencies = [
     # --- Étape 9 : API de scoring ---
     "fastapi>=0.110",         # framework API REST
     "uvicorn>=0.29",          # serveur ASGI
+    # --- Étape 10 : monitoring / drift ---
+    "evidently>=0.7",         # détection de dérive des données (data drift)
 ]
 
 [project.scripts]
@@ -39,6 +41,7 @@ readmission-train-gboost = "readmission_risk.modeling.gboost:main"
 readmission-calibrate = "readmission_risk.modeling.calibrate:main"
 readmission-explain = "readmission_risk.evaluation.explain:main"
 readmission-serve = "readmission_risk.serving.api:run"
+readmission-drift = "readmission_risk.monitoring.drift:main"
 
 [dependency-groups]
 dev = [

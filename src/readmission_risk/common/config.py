@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     # --- Explicabilité & équité (étape 8) ---
     shap_sample_size: int = 2000  # échantillon de test pour le calcul SHAP (vitesse)
 
+    # --- Monitoring / drift (étape 10) ---
+    monitoring_sample: int = 5000  # taille des échantillons réf/courant pour le rapport
+    drift_threshold: float = 0.2   # part de colonnes driftées -> déclenche un ré-entraînement
+
     # --- MLflow (utilisé à partir de l'étape 5) ---
     # Backend SQLite : le backend « fichier » (./mlruns) est déprécié en MLflow 3.x.
     mlflow_tracking_uri: str = "sqlite:///mlflow.db"
