@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     lgbm_n_trials: int = 25     # nb d'essais Optuna (réduire pour aller plus vite)
     tuning_cv_folds: int = 3    # folds pendant le tuning (5 folds pour l'éval finale)
 
+    # --- Calibration & conformal (étape 7) ---
+    conformal_confidence: float = 0.9  # couverture cible des ensembles de prédiction
+    model_filename: str = "model.joblib"  # modèle calibré + conformal sauvegardés
+
     # --- MLflow (utilisé à partir de l'étape 5) ---
     # Backend SQLite : le backend « fichier » (./mlruns) est déprécié en MLflow 3.x.
     mlflow_tracking_uri: str = "sqlite:///mlflow.db"

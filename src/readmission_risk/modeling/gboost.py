@@ -29,6 +29,21 @@ optuna.logging.set_verbosity(optuna.logging.WARNING)  # silence le bruit d'Optun
 # n_jobs=1 : on parallélise plutôt les folds de CV (évite la sur-souscription threads).
 FIXED_PARAMS = dict(objective="binary", n_jobs=1, verbose=-1, subsample_freq=1)
 
+# Meilleurs hyperparamètres trouvés par Optuna (étape 6), figés pour les étapes
+# aval (calibration, serving) afin d'éviter de re-tuner à chaque fois. En prod, on
+# les chargerait depuis le model registry MLflow.
+DEFAULT_LGBM_PARAMS = {
+    "n_estimators": 483,
+    "learning_rate": 0.010636066512540286,
+    "num_leaves": 124,
+    "max_depth": 11,
+    "min_child_samples": 50,
+    "subsample": 0.6727299868828402,
+    "colsample_bytree": 0.6733618039413735,
+    "reg_alpha": 0.016480446427978974,
+    "reg_lambda": 0.12561043700013563,
+}
+
 
 def build_pipeline(numeric, categorical, params: dict, scale_pos_weight: float) -> Pipeline:
     pre = build_preprocessor(numeric, categorical)
