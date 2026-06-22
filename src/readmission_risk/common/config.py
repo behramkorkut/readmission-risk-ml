@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     # --- Split ---
     test_size: float = 0.2  # part du jeu de test (hold-out), patient-disjoint
 
+    # --- Tuning LightGBM (étape 6) ---
+    lgbm_n_trials: int = 25     # nb d'essais Optuna (réduire pour aller plus vite)
+    tuning_cv_folds: int = 3    # folds pendant le tuning (5 folds pour l'éval finale)
+
     # --- MLflow (utilisé à partir de l'étape 5) ---
     # Backend SQLite : le backend « fichier » (./mlruns) est déprécié en MLflow 3.x.
     mlflow_tracking_uri: str = "sqlite:///mlflow.db"

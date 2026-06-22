@@ -13,9 +13,17 @@ Métriques adaptées au déséquilibre :
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import StratifiedGroupKFold, cross_validate
+
+# Warning bénin : la matrice creuse issue du ColumnTransformer n'a pas de noms de
+# colonnes, ce que LightGBM signale à la prédiction. Aucun impact -> on le tait.
+warnings.filterwarnings(
+    "ignore", message="X does not have valid feature names", category=UserWarning
+)
 
 SCORING = {
     "pr_auc": "average_precision",
