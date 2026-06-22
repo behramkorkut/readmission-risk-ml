@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     conformal_confidence: float = 0.9  # couverture cible des ensembles de prédiction
     model_filename: str = "model.joblib"  # modèle calibré + conformal sauvegardés
 
+    # --- Explicabilité & équité (étape 8) ---
+    shap_sample_size: int = 2000  # échantillon de test pour le calcul SHAP (vitesse)
+
     # --- MLflow (utilisé à partir de l'étape 5) ---
     # Backend SQLite : le backend « fichier » (./mlruns) est déprécié en MLflow 3.x.
     mlflow_tracking_uri: str = "sqlite:///mlflow.db"
