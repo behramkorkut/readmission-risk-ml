@@ -26,6 +26,9 @@ dependencies = [
     "joblib>=1.3",            # sérialisation du modèle final
     # --- Étape 8 : explicabilité ---
     "shap>=0.45",             # attributions SHAP (importance globale + locale)
+    # --- Étape 9 : API de scoring ---
+    "fastapi>=0.110",         # framework API REST
+    "uvicorn>=0.29",          # serveur ASGI
 ]
 
 [project.scripts]
@@ -35,6 +38,7 @@ readmission-train-baseline = "readmission_risk.modeling.baseline:main"
 readmission-train-gboost = "readmission_risk.modeling.gboost:main"
 readmission-calibrate = "readmission_risk.modeling.calibrate:main"
 readmission-explain = "readmission_risk.evaluation.explain:main"
+readmission-serve = "readmission_risk.serving.api:run"
 
 [dependency-groups]
 dev = [

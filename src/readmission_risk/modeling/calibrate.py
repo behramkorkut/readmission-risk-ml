@@ -166,8 +166,9 @@ def main() -> None:
     model_path = settings.models_dir / settings.model_filename
     joblib.dump(
         {
-            "model": best_model,
-            "conformal": scc,
+            "model": best_model,          # modèle calibré (probabilités fiables)
+            "conformal": scc,             # ensembles de prédiction (incertitude)
+            "base_pipeline": base,        # pipeline brut (pour SHAP en temps réel)
             "feature_cols": cols,
             "confidence_level": settings.conformal_confidence,
             "calibration_method": best_method,
