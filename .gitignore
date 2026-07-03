@@ -25,6 +25,7 @@ models/*
 # Rapports générés (EDA, drift, SHAP...)
 reports/*
 !reports/.gitkeep
+!reports/*.png
 
 # Suivi d'expériences MLflow
 mlruns/
