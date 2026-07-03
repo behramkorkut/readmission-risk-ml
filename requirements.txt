@@ -1,0 +1,15 @@
+# Dépendances pour la démo Streamlit Cloud (streamlit_app.py).
+# Versions alignées sur uv.lock — le développement local reste géré par uv (pyproject.toml).
+streamlit>=1.38
+scikit-learn==1.9.0
+lightgbm==4.6.0
+mapie==1.4.1
+shap==0.52.0
+numpy==2.4.6
+pandas==2.3.3
+joblib==1.5.3
+matplotlib==3.11.0
+# Requis pour dé-sérialiser le bundle (imports du paquet readmission_risk)
+optuna==4.9.0
+structlog==26.1.0
+pydantic-settings==2.14.2

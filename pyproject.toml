@@ -44,6 +44,9 @@ readmission-serve = "readmission_risk.serving.api:run"
 readmission-drift = "readmission_risk.monitoring.drift:main"
 
 [dependency-groups]
+demo = [
+    "streamlit>=1.38",  # démo interactive (app/streamlit_app.py)
+]
 dev = [
     "ruff>=0.5",      # linter + formatter
     "pytest>=8.2",    # tests

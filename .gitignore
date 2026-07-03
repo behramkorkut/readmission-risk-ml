@@ -19,6 +19,8 @@ data/*
 # Modèles entraînés
 models/*
 !models/.gitkeep
+# Le bundle final est versionné : requis par la démo Streamlit Cloud (6 Mo)
+!models/model.joblib
 
 # Rapports générés (EDA, drift, SHAP...)
 reports/*
