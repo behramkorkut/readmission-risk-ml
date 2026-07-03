@@ -5,6 +5,7 @@
 **Un pipeline Machine Learning de bout en bout, pensé pour la production :**
 de la donnée hospitalière brute et imparfaite à une API de scoring **calibrée, explicable et surveillée**.
 
+[![Live demo](https://img.shields.io/badge/Live_demo-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://readmission-risk-ml-hc8jagedod6ufuknz2yjqt.streamlit.app/)
 [![CI](https://github.com/behramkorkut/readmission-risk-ml/actions/workflows/ci.yml/badge.svg)](https://github.com/behramkorkut/readmission-risk-ml/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![uv](https://img.shields.io/badge/packaging-uv-DE5FE9?logo=astral&logoColor=white)
@@ -31,6 +32,9 @@ Les réadmissions précoces sont coûteuses, souvent évitables et pénalisées 
 Un modèle utile doit être **honnête** (aucune fuite de données) et **digne de confiance**
 (calibré, accompagné d'une incertitude, explicable, auditable et surveillé en production).
 Ce projet construit exactement cela, étape par étape.
+
+> ▶ **[Essayer la démo interactive](https://readmission-risk-ml-hc8jagedod6ufuknz2yjqt.streamlit.app/)** — risque calibré, ensemble de prédiction
+> conformel et explications SHAP sur un dossier patient que vous composez (profils pré-remplis inclus).
 
 **Données** : *Diabetes 130-US hospitals (1999-2008)* — ~101 766 séjours, 50 variables (UCI),
 choisi pour son réalisme (valeurs manquantes, codes ICD-9, plusieurs séjours par patient,
