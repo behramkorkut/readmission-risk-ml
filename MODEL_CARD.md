@@ -37,6 +37,14 @@
 | Brier (calibré) | ~0,097 | vs ~0,195 non calibré |
 | Couverture conformelle | ~0,90 | cible 0,90 |
 
+
+## Utilité clinique
+
+Évaluée par Decision Curve Analysis (`dcurves`) sur le test hold-out patient-disjoint :
+bénéfice net supérieur aux stratégies « suivre tout le monde » et « ne suivre personne » sur
+la plage de seuils 5–35 %. Au seuil de 10 % : NB = 0,035 (modèle) vs 0,016 (suivi systématique).
+Reproduire : `uv run readmission-dca` -> `reports/decision_curve.png`.
+
 ## Équité (audit par sous-groupes)
 - **Sexe** : équitable (écart de ROC-AUC ≈ 0,002).
 - **Âge** : **biais réel** — le modèle se dégrade sur les patients très âgés (ROC-AUC

@@ -10,7 +10,7 @@ de la donnée hospitalière brute et imparfaite à une API de scoring **calibré
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![uv](https://img.shields.io/badge/packaging-uv-DE5FE9?logo=astral&logoColor=white)
 ![Ruff](https://img.shields.io/badge/lint-ruff-261230?logo=ruff&logoColor=white)
-![pytest](https://img.shields.io/badge/tests-29%20passed-0A9EDC?logo=pytest&logoColor=white)
+![pytest](https://img.shields.io/badge/tests-33%20passed-0A9EDC?logo=pytest&logoColor=white)
 
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-F7931E?logo=scikitlearn&logoColor=white)
 ![LightGBM](https://img.shields.io/badge/LightGBM-gradient%20boosting-9ACD32)
@@ -79,6 +79,23 @@ garantie** par conformal prediction (un ensemble `{réadmission}` confiant vs `{
 sous-groupes (équitable selon le sexe ; dégradation documentée sur les patients très âgés).
 Détails, performances et **limites** dans la [**Model Card**](MODEL_CARD.md).
 
+### Utilité clinique — courbe de décision
+
+La discrimination (PR-AUC) et la calibration (Brier) ne disent pas si le modèle est **utile en
+pratique**. La **Decision Curve Analysis** (Vickers & Elkin, package
+[`dcurves`](https://github.com/MSKCC-Epi-Bio/dcurves) du MSKCC) compare le **bénéfice net** d'un
+ciblage par le modèle à deux politiques naïves : suivre tout le monde, ne suivre personne.
+
+<p align="center">
+  <img src="reports/decision_curve.png" width="72%" alt="Courbe de décision (Decision Curve Analysis)"/>
+</p>
+
+Sur toute la plage de seuils cliniquement plausibles, cibler les patients avec le modèle apporte
+le meilleur bénéfice net : à un seuil de 10 %, **0,035** contre 0,016 pour « suivre tout le
+monde » ; et dès la prévalence (~11,4 %) le suivi systématique devient **contre-productif**
+(bénéfice net négatif) alors que le modèle reste positif jusqu'à ~35 %. Autrement dit : le modèle
+permet de **concentrer les ressources de suivi post-sortie là où elles rapportent**.
+
 ## Rigueur : la validation anti-fuite
 
 Le point qui rend les scores **honnêtes**. Le `TRAIN` est découpé en jeux **patient-disjoints**
@@ -120,8 +137,9 @@ uv run readmission-train-baseline # 3. baseline (régression logistique) + MLflo
 uv run readmission-train-gboost   # 4. LightGBM tuné par Optuna + MLflow
 uv run readmission-calibrate      # 5. calibration + conformal -> models/model.joblib
 uv run readmission-explain        # 6. SHAP + audit d'équité -> reports/
-uv run readmission-drift          # 7. monitoring de dérive -> reports/drift_report.html
-uv run readmission-serve          # 8. API de scoring -> http://localhost:8000/docs
+uv run readmission-dca            # 7. courbe de décision (utilité clinique) -> reports/
+uv run readmission-drift          # 8. monitoring de dérive -> reports/drift_report.html
+uv run readmission-serve          # 9. API de scoring -> http://localhost:8000/docs
 ```
 
 Suivi des expériences : `uv run mlflow ui --backend-store-uri sqlite:///mlflow.db`

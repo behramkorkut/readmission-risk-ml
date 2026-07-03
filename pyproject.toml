@@ -31,6 +31,7 @@ dependencies = [
     "uvicorn>=0.29",          # serveur ASGI
     # --- Étape 10 : monitoring / drift ---
     "evidently>=0.7",         # détection de dérive des données (data drift)
+    "dcurves>=1.1.7",
 ]
 
 [project.scripts]
@@ -42,6 +43,7 @@ readmission-calibrate = "readmission_risk.modeling.calibrate:main"
 readmission-explain = "readmission_risk.evaluation.explain:main"
 readmission-serve = "readmission_risk.serving.api:run"
 readmission-drift = "readmission_risk.monitoring.drift:main"
+readmission-dca = "readmission_risk.evaluation.clinical_utility:main"
 
 [dependency-groups]
 demo = [
