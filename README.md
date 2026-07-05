@@ -1,11 +1,12 @@
 <div align="center">
 
-# Readmission Risk — Prédiction de réadmission hospitalière à 30 jours
+# Readmission Risk :  Prédiction de réadmission hospitalière à 30 jours
 
 **Un pipeline Machine Learning de bout en bout, pensé pour la production :**
 de la donnée hospitalière brute et imparfaite à une API de scoring **calibrée, explicable et surveillée**.
 
 [![Live demo](https://img.shields.io/badge/Live_demo-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://readmission-risk-ml-hc8jagedod6ufuknz2yjqt.streamlit.app/)
+[![API live](https://img.shields.io/badge/API_live-OVHcloud_🇫🇷-123F6D?logo=fastapi&logoColor=white)](https://api-readmission.wisty.fr/docs)
 [![CI](https://github.com/behramkorkut/readmission-risk-ml/actions/workflows/ci.yml/badge.svg)](https://github.com/behramkorkut/readmission-risk-ml/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![uv](https://img.shields.io/badge/packaging-uv-DE5FE9?logo=astral&logoColor=white)
@@ -168,11 +169,34 @@ docker build -t readmission-api .
 docker run -p 8000:8000 readmission-api
 ```
 
+## Déploiement en production — cloud souverain 🇫🇷
+
+L'API tourne **en production** sur un VPS **OVHcloud** (Strasbourg, France) :
+
+> ▶ **https://api-readmission.wisty.fr/docs** — Swagger interactif, testez une prédiction depuis votre navigateur.
+
+```bash
+curl -s -X POST https://api-readmission.wisty.fr/predict -H "Content-Type: application/json" \
+  -d '{"features":{"age":"[70-80)","number_inpatient":3,"number_diagnoses":9}}'
+```
+
+```
+Internet ──443──> nginx (TLS Let's Encrypt) ──> 127.0.0.1:8000 ──> Docker : readmission-api
+         ──22───> sshd (clés uniquement) · UFW · fail2ban
+```
+
+Serveur administré et durci à la main : authentification SSH par clé uniquement,
+pare-feu UFW, fail2ban (2 IP bannies dès la première heure), conteneur lié à la
+boucle locale (Docker contourne UFW — nginx est la seule porte d'entrée publique),
+TLS à renouvellement automatique. Procédure complète, pièges rencontrés et
+exploitation courante : [**docs/deployment.md**](docs/deployment.md).
+Coût total : **4,49 € HT/mois**.
+
 ## Qualité
 
 ```bash
 uv run ruff check .       # lint
-uv run pytest -q          # 29 tests (validés aussi en CI à chaque push)
+uv run pytest -q          # 33 tests (validés aussi en CI à chaque push)
 ```
 
 Tests couvrant l'anti-fuite (split par patient), le contrat de données (Pandera), le nettoyage,
@@ -193,6 +217,7 @@ readmission-risk-ml/
 │   └── monitoring/  # drift (Evidently) + injection de dérive
 ├── tests/           # tests pytest
 ├── reports/         # graphiques (calibration, SHAP) + rapport de drift interactif
+├── docs/deployment.md # déploiement production (VPS OVH, nginx, TLS, durcissement)
 ├── MODEL_CARD.md    # usage, performances, équité, limites
 └── journal/         # journal de bord détaillé (démarche pas à pas)
 ```
