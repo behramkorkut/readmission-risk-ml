@@ -41,3 +41,5 @@ journal/*
 # MLflow (backend SQLite + artefacts)
 mlflow.db
 mlartifacts/
+audit_folder/
+audit_folder/*
