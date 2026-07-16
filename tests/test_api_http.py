@@ -119,3 +119,37 @@ class TestOpenAPI:
         assert r.status_code == 200
         assert "/predict" in r.json()["paths"]
         assert "/health" in r.json()["paths"]
+        assert "/ready" in r.json()["paths"]
+
+
+class TestReadyHTTP:
+    """Readiness avancée (audit n°10) : chargement réel + prédiction factice + mémoire."""
+
+    def test_ready_200_with_smoke_test_and_memory(self, client):
+        r = client.get("/ready")
+        assert r.status_code == 200
+        assert r.headers["content-type"].startswith("application/json")
+        body = r.json()
+        assert body["status"] == "ready"
+        assert body["model_loaded"] is True
+        assert body["smoke_test_ok"] is True
+        assert 0.0 <= body["smoke_test_risk"] <= 1.0  # prédiction factice = proba valide
+        assert body["memory_mb_max_rss"] > 0.0
+
+    def test_ready_503_when_model_absent(self, client_no_model):
+        r = client_no_model.get("/ready")
+        assert r.status_code == 503
+        assert "non prêt" in r.json()["detail"]
+
+    def test_ready_is_public_under_api_key(self, tmp_path, monkeypatch):
+        # Les sondes d'orchestration ne portent pas de clé : /ready reste public,
+        # comme /health, même quand l'auth est activée sur /predict.
+        build_demo_model_bundle(tmp_path / "model.joblib")
+        monkeypatch.setattr(settings, "models_dir", tmp_path)
+        monkeypatch.setattr(settings, "model_filename", "model.joblib")
+        monkeypatch.setattr(settings, "api_key", "cle-quelconque")
+        api._STATE.clear()
+        with TestClient(api.app) as c:
+            assert c.get("/ready").status_code == 200
+            assert c.post("/predict", json=VALID_PAYLOAD).status_code == 401
+        api._STATE.clear()

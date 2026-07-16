@@ -1,7 +1,8 @@
 """API de scoring (FastAPI) : sert le modèle calibré + conformal + raisons SHAP.
 
 Endpoints :
-- GET  /health   : état du service (modèle chargé ?)
+- GET  /health   : vivacité (liveness) — léger, le processus tourne ; pour sondes fréquentes
+- GET  /ready    : disponibilité (readiness) — modèle chargé + prédiction factice + mémoire
 - POST /predict  : risque calibré + ensemble de prédiction conformel + top raisons SHAP
 
 Le modèle (models/model.joblib) est produit par `readmission-calibrate`. Il contient
@@ -10,6 +11,8 @@ le modèle calibré, le prédicteur conformel et le pipeline de base (pour SHAP)
 
 from __future__ import annotations
 
+import resource
+import sys
 from typing import Any
 
 import joblib
@@ -70,11 +73,46 @@ class PredictResponse(BaseModel):
     top_reasons: list[Reason]
 
 
+def _max_rss_mb() -> float:
+    """Mémoire résidente max du processus (Mo) — info de readiness, pas un garde-fou."""
+    usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    # Linux : ru_maxrss en Kio ; macOS : en octets.
+    return round(usage / (1024**2 if sys.platform == "darwin" else 1024), 1)
+
+
 # ---------- Endpoints ----------
 @app.get("/health")
 def health() -> dict[str, Any]:
+    """Liveness : léger et toujours répondant (le processus tourne, le fichier existe)."""
     path = settings.models_dir / settings.model_filename
     return {"status": "ok", "model_loaded": path.exists()}
+
+
+@app.get("/ready")
+def ready() -> dict[str, Any]:
+    """Readiness : le modèle est RÉELLEMENT chargé et capable de prédire.
+
+    Charge l'état si besoin (modèle + explainer SHAP) puis exécute une prédiction
+    factice (toutes les features absentes -> imputées, contrat de /predict).
+    Toute défaillance -> 503, pour qu'un orchestrateur retire le service du trafic.
+    """
+    try:
+        state = _load_state()
+    except Exception as exc:  # fichier absent, joblib corrompu, explainer SHAP en échec
+        raise HTTPException(status_code=503, detail=f"Service non prêt : {exc}") from exc
+    try:
+        row = {col: np.nan for col in state["feature_cols"]}
+        df = pd.DataFrame([row], columns=state["feature_cols"])
+        proba = float(state["model"].predict_proba(df)[:, 1][0])
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Modèle chargé mais prédiction impossible : {exc}") from exc
+    return {
+        "status": "ready",
+        "model_loaded": True,
+        "smoke_test_ok": 0.0 <= proba <= 1.0,
+        "smoke_test_risk": round(proba, 4),
+        "memory_mb_max_rss": _max_rss_mb(),
+    }
 
 
 # Rate limiting AVANT auth : une rafale (même non authentifiée) plafonne à 429.

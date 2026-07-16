@@ -172,6 +172,10 @@ curl -X POST http://localhost:8000/predict -H "Content-Type: application/json" \
   -d '{"features":{"age":"[70-80)","number_inpatient":3,"number_diagnoses":9}}'
 ```
 
+**Sondes** : `GET /health` = vivacité (léger, le processus tourne) ; `GET /ready` =
+disponibilité réelle (modèle chargé + prédiction factice + mémoire RSS, 503 sinon) —
+à brancher sur les probes liveness/readiness d'un orchestrateur.
+
 ##  Docker
 
 ```bash
