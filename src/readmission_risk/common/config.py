@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     # --- Explicabilité & équité (étape 8) ---
     shap_sample_size: int = 2000  # échantillon de test pour le calcul SHAP (vitesse)
 
+    # --- Sécurité API (audit : auth + rate limiting) ---
+    api_key: str | None = None  # si défini (env API_KEY), /predict exige l'en-tête X-API-Key
+    rate_limit_per_minute: int = 60  # 429 au-delà, par IP client ; 0 = désactivé
+
     # --- Monitoring / drift (étape 10) ---
     monitoring_sample: int = 5000  # taille des échantillons réf/courant pour le rapport
     drift_threshold: float = 0.2   # part de colonnes driftées -> déclenche un ré-entraînement

@@ -43,3 +43,4 @@ mlflow.db
 mlartifacts/
 audit_folder/
 audit_folder/*
+audit readmission-risk0ml/

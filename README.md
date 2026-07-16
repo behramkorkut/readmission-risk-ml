@@ -161,6 +161,17 @@ curl -X POST http://localhost:8000/predict -H "Content-Type: application/json" \
 }
 ```
 
+**Sécurité** (optionnelle, activée par `.env`) : si `API_KEY` est défini, `/predict`
+exige l'en-tête `X-API-Key` (401/403 sinon ; `/health` reste public) ; le débit est
+plafonné à `RATE_LIMIT_PER_MINUTE` requêtes/min par IP (429 + `Retry-After`, 0 = off).
+Sans `API_KEY`, l'API reste ouverte pour la démo. Exemple avec clé :
+
+```bash
+curl -X POST http://localhost:8000/predict -H "Content-Type: application/json" \
+  -H "X-API-Key: $API_KEY" \
+  -d '{"features":{"age":"[70-80)","number_inpatient":3,"number_diagnoses":9}}'
+```
+
 ##  Docker
 
 ```bash

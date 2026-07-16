@@ -16,10 +16,11 @@ import joblib
 import numpy as np
 import pandas as pd
 import shap
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Security
 from pydantic import BaseModel, Field
 
 from readmission_risk.common.config import settings
+from readmission_risk.serving.security import rate_limit, require_api_key
 
 app = FastAPI(title="Readmission Risk API", version="1.0")
 
@@ -76,7 +77,12 @@ def health() -> dict[str, Any]:
     return {"status": "ok", "model_loaded": path.exists()}
 
 
-@app.post("/predict", response_model=PredictResponse)
+# Rate limiting AVANT auth : une rafale (même non authentifiée) plafonne à 429.
+@app.post(
+    "/predict",
+    response_model=PredictResponse,
+    dependencies=[Depends(rate_limit), Security(require_api_key)],
+)
 def predict(req: PredictRequest) -> PredictResponse:
     try:
         state = _load_state()
