@@ -26,6 +26,7 @@ def client(tmp_path, monkeypatch):
     build_demo_model_bundle(tmp_path / "model.joblib")
     monkeypatch.setattr(settings, "models_dir", tmp_path)
     monkeypatch.setattr(settings, "model_filename", "model.joblib")
+    monkeypatch.setattr(settings, "data_dir", tmp_path)  # journal de monitoring en zone temporaire
     api._STATE.clear()
     with TestClient(api.app) as c:
         yield c
@@ -37,6 +38,7 @@ def client_no_model(tmp_path, monkeypatch):
     """TestClient SANS artefact modèle (models_dir vide -> prédiction impossible)."""
     monkeypatch.setattr(settings, "models_dir", tmp_path)
     monkeypatch.setattr(settings, "model_filename", "model.joblib")
+    monkeypatch.setattr(settings, "data_dir", tmp_path)  # journal de monitoring en zone temporaire
     api._STATE.clear()
     with TestClient(api.app) as c:
         yield c

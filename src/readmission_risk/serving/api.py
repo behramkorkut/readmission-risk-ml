@@ -4,6 +4,7 @@ Endpoints :
 - GET  /health   : vivacité (liveness) — léger, le processus tourne ; pour sondes fréquentes
 - GET  /ready    : disponibilité (readiness) — modèle chargé + prédiction factice + mémoire
 - POST /predict  : risque calibré + ensemble de prédiction conformel + top raisons SHAP
+- GET  /monitoring/summary : monitoring online des prédictions servies (audit n°6)
 
 Le modèle (models/model.joblib) est produit par `readmission-calibrate`. Il contient
 le modèle calibré, le prédicteur conformel et le pipeline de base (pour SHAP).
@@ -13,16 +14,18 @@ from __future__ import annotations
 
 import resource
 import sys
+import time
 from typing import Any
 
 import joblib
 import numpy as np
 import pandas as pd
 import shap
-from fastapi import Depends, FastAPI, HTTPException, Security
+from fastapi import Depends, FastAPI, HTTPException, Query, Security
 from pydantic import BaseModel, Field
 
 from readmission_risk.common.config import settings
+from readmission_risk.monitoring.predictions_log import load_summary, log_prediction
 from readmission_risk.serving.security import rate_limit, require_api_key
 
 app = FastAPI(title="Readmission Risk API", version="1.0")
@@ -122,6 +125,7 @@ def ready() -> dict[str, Any]:
     dependencies=[Depends(rate_limit), Security(require_api_key)],
 )
 def predict(req: PredictRequest) -> PredictResponse:
+    t0 = time.perf_counter()  # latence de service (monitoring online)
     try:
         state = _load_state()
     except FileNotFoundError as exc:
@@ -156,7 +160,7 @@ def predict(req: PredictRequest) -> PredictResponse:
         for i in top_idx
     ]
 
-    return PredictResponse(
+    resp = PredictResponse(
         risk=round(proba, 4),
         risk_label=LABELS[int(proba >= 0.5)],
         prediction_set=prediction_set,
@@ -164,6 +168,22 @@ def predict(req: PredictRequest) -> PredictResponse:
         calibration_method=str(state["calibration_method"]),
         top_reasons=reasons,
     )
+    # Monitoring online : sorties + latence uniquement (jamais les features). Ne lève jamais.
+    log_prediction(
+        latency_ms=(time.perf_counter() - t0) * 1000,
+        risk=resp.risk,
+        risk_label=resp.risk_label,
+        prediction_set_size=len(resp.prediction_set),
+    )
+    return resp
+
+
+@app.get("/monitoring/summary", dependencies=[Security(require_api_key)])
+def monitoring_summary(window_hours: float = Query(24.0, gt=0, le=24 * 30)) -> dict[str, Any]:
+    """Monitoring online des prédictions servies : volume, distribution du risque,
+    latences, incertitude conformelle — sur une fenêtre glissante (défaut 24 h).
+    Agrégats anonymisés : aucune donnée patient n'est journalisée (ni exposée)."""
+    return load_summary(window_hours)
 
 
 def run() -> None:

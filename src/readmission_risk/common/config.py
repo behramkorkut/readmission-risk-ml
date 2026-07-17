@@ -56,6 +56,9 @@ class Settings(BaseSettings):
     monitoring_sample: int = 5000  # taille des échantillons réf/courant pour le rapport
     drift_threshold: float = 0.2   # part de colonnes driftées -> déclenche un ré-entraînement
 
+    # --- Monitoring des prédictions servies (audit n°6) ---
+    predictions_log_filename: str = "predictions_log.db"  # journal SQLite (dans data_dir)
+
     # --- MLflow (utilisé à partir de l'étape 5) ---
     # Backend SQLite : le backend « fichier » (./mlruns) est déprécié en MLflow 3.x.
     mlflow_tracking_uri: str = "sqlite:///mlflow.db"

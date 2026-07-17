@@ -44,6 +44,7 @@ def loaded(tmp_path, monkeypatch):
     )
     monkeypatch.setattr(settings, "models_dir", tmp_path)
     monkeypatch.setattr(settings, "model_filename", "model.joblib")
+    monkeypatch.setattr(settings, "data_dir", tmp_path)  # journal de monitoring en zone temporaire
     api._STATE.clear()
     yield
     api._STATE.clear()

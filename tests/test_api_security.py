@@ -28,6 +28,7 @@ def secured_client(tmp_path, monkeypatch):
     build_demo_model_bundle(tmp_path / "model.joblib")
     monkeypatch.setattr(settings, "models_dir", tmp_path)
     monkeypatch.setattr(settings, "model_filename", "model.joblib")
+    monkeypatch.setattr(settings, "data_dir", tmp_path)  # journal de monitoring en zone temporaire
     monkeypatch.setattr(settings, "api_key", TEST_KEY)
     security.reset_rate_limiter()
     api._STATE.clear()
