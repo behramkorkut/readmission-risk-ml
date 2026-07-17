@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "artifacts": {
+    "diabetic_data.parquet": {
+      "sha256": "d6c79fbdaddecf149994aa1fe524640a6486a9f0ae4b062722c0b68a958cd721",
+      "size_bytes": 2740284,
+      "rows": 101766,
+      "cols": 50,
+      "produced_by": "readmission-ingest",
+      "produced_at_utc": "2026-07-17T13:24:24+00:00",
+      "code_git_sha": "d514d38"
+    },
+    "diabetic_clean.parquet": {
+      "sha256": "bf4261748dfbe2c421791842ed2de8f01e9cc10aa2ec07f0e53d96528400138c",
+      "size_bytes": 2410674,
+      "rows": 99340,
+      "cols": 49,
+      "produced_by": "readmission-clean",
+      "produced_at_utc": "2026-07-17T13:24:36+00:00",
+      "code_git_sha": "d514d38"
+    }
+  }
+}
