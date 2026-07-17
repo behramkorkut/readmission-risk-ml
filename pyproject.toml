@@ -1,6 +1,6 @@
 [project]
 name = "readmission-risk-ml"
-version = "0.1.0"
+version = "1.1.0"
 description = "Prédiction de réadmission hospitalière à 30 jours (diabète) — projet ML/DS avec validation rigoureuse et MLOps"
 readme = "README.md"
 requires-python = ">=3.12"

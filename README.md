@@ -249,6 +249,7 @@ readmission-risk-ml/
 ├── tests/           # 85 tests : unitaires, propriétés, intégration HTTP, end-to-end
 ├── reports/         # graphiques (calibration, SHAP, DCA) + rapport de drift interactif
 ├── docs/deployment.md # déploiement production (VPS OVH, nginx, TLS, durcissement)
+├── CHANGELOG.md     # historique des versions (Keep a Changelog, semver)
 ├── MODEL_CARD.md    # usage, performances, équité, limites
 └── journal/         # journal de bord détaillé (démarche pas à pas)
 ```
