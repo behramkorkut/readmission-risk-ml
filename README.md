@@ -11,7 +11,7 @@ de la donnée hospitalière brute et imparfaite à une API de scoring **calibré
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![uv](https://img.shields.io/badge/packaging-uv-DE5FE9?logo=astral&logoColor=white)
 ![Ruff](https://img.shields.io/badge/lint-ruff-261230?logo=ruff&logoColor=white)
-![pytest](https://img.shields.io/badge/tests-33%20passed-0A9EDC?logo=pytest&logoColor=white)
+![pytest](https://img.shields.io/badge/tests-85%20passed-0A9EDC?logo=pytest&logoColor=white)
 
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-F7931E?logo=scikitlearn&logoColor=white)
 ![LightGBM](https://img.shields.io/badge/LightGBM-gradient%20boosting-9ACD32)
@@ -51,8 +51,8 @@ flowchart LR
     D --> E["Modélisation<br/>baseline → LightGBM + Optuna"]
     E --> F["Calibration + Conformal<br/>isotonic · MAPIE (90%)"]
     F --> G["Explicabilité SHAP<br/>+ audit d'équité"]
-    F --> H["API FastAPI<br/>/predict"]
-    F --> I["Monitoring drift<br/>Evidently + ré-entraînement"]
+    F --> H["API FastAPI<br/>/predict public (rate limited)"]
+    F --> I["Monitoring<br/>drift Evidently + prédictions servies"]
     E -. tracking .-> M[("MLflow")]
     F -. tracking .-> M
 ```
@@ -80,7 +80,7 @@ garantie** par conformal prediction (un ensemble `{réadmission}` confiant vs `{
 sous-groupes (équitable selon le sexe ; dégradation documentée sur les patients très âgés).
 Détails, performances et **limites** dans la [**Model Card**](MODEL_CARD.md).
 
-### Utilité clinique — courbe de décision
+### Utilité clinique : la courbe de décision
 
 La discrimination (PR-AUC) et la calibration (Brier) ne disent pas si le modèle est **utile en
 pratique**. La **Decision Curve Analysis** (Vickers & Elkin, package
@@ -191,7 +191,7 @@ docker build -t readmission-api .
 docker run -p 8000:8000 readmission-api
 ```
 
-## Déploiement en production — cloud souverain 🇫🇷
+## Déploiement en production et en cloud souverain 🇫🇷
 
 L'API tourne **en production** sur un VPS **OVHcloud** (Strasbourg, France) :
 
@@ -218,27 +218,36 @@ Coût total : **4,49 € HT/mois**.
 
 ```bash
 uv run ruff check .       # lint
-uv run pytest -q          # 33 tests (validés aussi en CI à chaque push)
+uv run pytest -q          # 85 tests (validés aussi en CI à chaque push)
 ```
 
-Tests couvrant l'anti-fuite (split par patient), le contrat de données (Pandera), le nettoyage,
-le pipeline de features, la validation croisée, le tuning, la calibration/conformal, l'API et le drift.
+- **Unitaires & propriétés** : anti-fuite (split par patient), contrat de données (Pandera),
+  nettoyage, features, validation croisée, tuning, calibration/conformal, explicabilité,
+  drift, utilité clinique (DCA).
+- **Intégration HTTP (TestClient FastAPI)** : contrat JSON, codes 200/422/405/503,
+  sécurité (clé API 401/403, rate limiting 429 + `Retry-After`), sondes `/health` et `/ready`.
+- **End-to-end** : la chaîne complète `ingest → clean → train → calibrate → predict`
+  exécutée sur un dataset synthétique hermétique (aucun réseau, MLflow et disque isolés).
+- **Ops** : manifeste de données (SHA-256, détection de dérive), journal de monitoring
+  (privacy-by-design : aucune feature patient journalisée).
 
 ##  Structure
 
 ```
 readmission-risk-ml/
 ├── src/readmission_risk/
-│   ├── common/      # config (graine, chemins, MLflow)
-│   ├── data/        # ingestion, nettoyage/anti-fuite, split par patient
+│   ├── common/      # config (graine, chemins, MLflow, sécurité API)
+│   ├── data/        # ingestion, nettoyage/anti-fuite, split par patient,
+│   │                # manifeste SHA-256 de traçabilité (versionné dans git)
 │   ├── validation/  # schéma Pandera (contrat de données)
 │   ├── features/    # ColumnTransformer (imputation, OHE, anti-fuite intra-CV)
 │   ├── modeling/    # CV groupée, baseline, LightGBM+Optuna, calibration+conformal
-│   ├── evaluation/  # SHAP + audit d'équité
-│   ├── serving/     # API FastAPI
-│   └── monitoring/  # drift (Evidently) + injection de dérive
-├── tests/           # tests pytest
-├── reports/         # graphiques (calibration, SHAP) + rapport de drift interactif
+│   ├── evaluation/  # SHAP + audit d'équité + utilité clinique (DCA)
+│   ├── serving/     # API FastAPI + sécurité (clé API, rate limiting)
+│   └── monitoring/  # drift (Evidently) + journal des prédictions servies (SQLite)
+├── app/             # démo Streamlit (vitrine + onglet monitoring production)
+├── tests/           # 85 tests : unitaires, propriétés, intégration HTTP, end-to-end
+├── reports/         # graphiques (calibration, SHAP, DCA) + rapport de drift interactif
 ├── docs/deployment.md # déploiement production (VPS OVH, nginx, TLS, durcissement)
 ├── MODEL_CARD.md    # usage, performances, équité, limites
 └── journal/         # journal de bord détaillé (démarche pas à pas)
