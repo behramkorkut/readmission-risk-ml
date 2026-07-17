@@ -118,11 +118,13 @@ def ready() -> dict[str, Any]:
     }
 
 
-# Rate limiting AVANT auth : une rafale (même non authentifiée) plafonne à 429.
+# /predict est PUBLIC (démo portfolio) : sa protection est le rate limiting par IP.
+# Sur des données de santé réelles, on ajouterait Security(require_api_key) ici
+# (une ligne — la capacité d'auth existe et est testée, cf. /monitoring/summary).
 @app.post(
     "/predict",
     response_model=PredictResponse,
-    dependencies=[Depends(rate_limit), Security(require_api_key)],
+    dependencies=[Depends(rate_limit)],
 )
 def predict(req: PredictRequest) -> PredictResponse:
     t0 = time.perf_counter()  # latence de service (monitoring online)

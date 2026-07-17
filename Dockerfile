@@ -22,5 +22,6 @@ RUN uv sync --frozen --no-dev
 ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 8000
 
-# Sert l'API FastAPI
-CMD ["uvicorn", "readmission_risk.serving.api:app", "--host", "0.0.0.0", "--port", "8000"]
+# Sert l'API FastAPI. --proxy-headers : derrière nginx (X-Forwarded-For),
+# propage l'IP réelle du client — requis pour que le rate limiting par IP fonctionne.
+CMD ["uvicorn", "readmission_risk.serving.api:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]

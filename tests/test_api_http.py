@@ -145,7 +145,7 @@ class TestReadyHTTP:
 
     def test_ready_is_public_under_api_key(self, tmp_path, monkeypatch):
         # Les sondes d'orchestration ne portent pas de clé : /ready reste public,
-        # comme /health, même quand l'auth est activée sur /predict.
+        # comme /health et /predict (démo), même quand une clé protège les ops.
         build_demo_model_bundle(tmp_path / "model.joblib")
         monkeypatch.setattr(settings, "models_dir", tmp_path)
         monkeypatch.setattr(settings, "model_filename", "model.joblib")
@@ -153,5 +153,5 @@ class TestReadyHTTP:
         api._STATE.clear()
         with TestClient(api.app) as c:
             assert c.get("/ready").status_code == 200
-            assert c.post("/predict", json=VALID_PAYLOAD).status_code == 401
+            assert c.post("/predict", json=VALID_PAYLOAD).status_code == 200  # démo publique
         api._STATE.clear()

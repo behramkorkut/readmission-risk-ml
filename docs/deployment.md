@@ -66,12 +66,22 @@ que nginx (80/443) comme entrée publique.
 ```bash
 docker build -t readmission-api .           # le modèle est embarqué dans l'image
 docker run -d --name readmission-api --restart unless-stopped \
-  --memory=1g -p 127.0.0.1:8000:8000 readmission-api
+  --memory=1g -p 127.0.0.1:8000:8000 \
+  --env-file .env \
+  -v readmission-data:/app/data \
+  readmission-api
 ```
 
 - `--restart unless-stopped` : relance automatique au reboot du VPS.
 - `--memory=1g` : borne mémoire — le VPS héberge plusieurs services, aucun ne
   doit pouvoir affamer les autres.
+- `--env-file .env` : configuration sensible (ex. `API_KEY`) injectée au runtime —
+  le `.env` est exclu de l'image par le `.dockerignore` (jamais de secret cuit dans
+  une couche Docker).
+- `-v readmission-data:/app/data` : persiste le journal SQLite du monitoring
+  (`predictions_log.db`) malgré les recréations du conteneur.
+- uvicorn est lancé avec `--proxy-headers` (cf. Dockerfile) : l'IP client réelle
+  (X-Forwarded-For posé par nginx) alimente le rate limiting.
 
 ## 5. Reverse proxy nginx + TLS
 
@@ -109,7 +119,10 @@ df -h / && free -h                           # disque / mémoire
 cd ~/readmission-risk-ml && git pull && docker build -t readmission-api . \
   && docker rm -f readmission-api \
   && docker run -d --name readmission-api --restart unless-stopped \
-       --memory=1g -p 127.0.0.1:8000:8000 readmission-api
+       --memory=1g -p 127.0.0.1:8000:8000 \
+       --env-file .env \
+       -v readmission-data:/app/data \
+       readmission-api
 ```
 
 ## Coût total

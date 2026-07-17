@@ -1,10 +1,13 @@
-"""Tests de la sécurité HTTP de l'API : clé API (401/403) + rate limiting (429).
+"""Tests de la sécurité HTTP de l'API : clé API sur les endpoints d'ops + rate limiting.
 
-Comportement nominal documenté (cf. serving/security.py) : tant que
-`settings.api_key` est None, /predict reste ouvert (démo publique) ; dès qu'une
-clé est configurée, l'en-tête X-API-Key est exigé. Le rate limiting est une
-fenêtre glissante en mémoire par IP client, testée ici sans `sleep` grâce à
-l'horloge injectable du limiteur.
+Contrat documenté (cf. serving/security.py) :
+- `/predict` est PUBLIC (démo portfolio : un recruteur doit pouvoir tester) — sa
+  protection est le rate limiting par IP (429) ; la clé, si envoyée, est ignorée.
+- `/monitoring/summary` (ops) exige X-API-Key dès que `settings.api_key` est
+  configuré : 401 si absente, 403 si invalide.
+- `/health` et `/ready` restent publics (sondes).
+Le rate limiting est une fenêtre glissante en mémoire par IP client, testée ici
+sans `sleep` grâce à l'horloge injectable du limiteur.
 """
 
 from __future__ import annotations
@@ -39,54 +42,57 @@ def secured_client(tmp_path, monkeypatch):
 
 
 class TestApiKeyAuth:
+    """La clé protège les endpoints d'ops ; /predict reste public (démo)."""
+
     def test_health_stays_public(self, secured_client):
         r = secured_client.get("/health")  # sondes : jamais d'auth
         assert r.status_code == 200
 
-    def test_predict_without_key_401(self, secured_client):
-        r = secured_client.post("/predict", json=PAYLOAD)
-        assert r.status_code == 401
-        assert "X-API-Key" in r.json()["detail"]
-
-    def test_predict_wrong_key_403(self, secured_client):
-        r = secured_client.post("/predict", json=PAYLOAD, headers={"X-API-Key": "mauvaise-cle"})
-        assert r.status_code == 403
-
-    def test_predict_with_key_200(self, secured_client):
-        r = secured_client.post("/predict", json=PAYLOAD, headers={"X-API-Key": TEST_KEY})
+    def test_predict_public_without_key(self, secured_client):
+        r = secured_client.post("/predict", json=PAYLOAD)  # démo publique, même avec clé configurée
         assert r.status_code == 200
         assert 0.0 <= r.json()["risk"] <= 1.0
 
-    def test_predict_open_when_no_key_configured(self, secured_client, monkeypatch):
-        # Comportement démo : sans clé configurée, l'endpoint reste ouvert.
-        monkeypatch.setattr(settings, "api_key", None)
-        r = secured_client.post("/predict", json=PAYLOAD)
+    def test_predict_ignores_key_when_sent(self, secured_client):
+        r = secured_client.post("/predict", json=PAYLOAD, headers={"X-API-Key": "nimporte-quoi"})
+        assert r.status_code == 200  # endpoint public : la clé n'est pas évaluée
+
+    def test_summary_without_key_401(self, secured_client):
+        r = secured_client.get("/monitoring/summary")
+        assert r.status_code == 401
+        assert "X-API-Key" in r.json()["detail"]
+
+    def test_summary_wrong_key_403(self, secured_client):
+        r = secured_client.get("/monitoring/summary", headers={"X-API-Key": "mauvaise-cle"})
+        assert r.status_code == 403
+
+    def test_summary_with_key_200(self, secured_client):
+        r = secured_client.get("/monitoring/summary", headers={"X-API-Key": TEST_KEY})
         assert r.status_code == 200
+        assert "n_predictions" in r.json()
 
 
 class TestRateLimitHTTP:
     def test_429_after_threshold_with_retry_after(self, secured_client, monkeypatch):
         monkeypatch.setattr(settings, "rate_limit_per_minute", 3)
-        headers = {"X-API-Key": TEST_KEY}
         for _ in range(3):
-            assert secured_client.post("/predict", json=PAYLOAD, headers=headers).status_code == 200
-        r = secured_client.post("/predict", json=PAYLOAD, headers=headers)
+            assert secured_client.post("/predict", json=PAYLOAD).status_code == 200
+        r = secured_client.post("/predict", json=PAYLOAD)
         assert r.status_code == 429
         assert "retry-after" in {k.lower(): v for k, v in r.headers.items()}
         assert "limite" in r.json()["detail"]
 
-    def test_rate_limit_before_auth(self, secured_client, monkeypatch):
-        # Une rafale SANS clé plafonne aussi (le 429 précède le 401) : brute-force freiné.
+    def test_rate_limit_protects_public_endpoint(self, secured_client, monkeypatch):
+        # Sans clé et sans restriction : c'est le rate limiting qui protège /predict de l'abus.
         monkeypatch.setattr(settings, "rate_limit_per_minute", 2)
-        assert secured_client.post("/predict", json=PAYLOAD).status_code == 401
-        assert secured_client.post("/predict", json=PAYLOAD).status_code == 401
+        assert secured_client.post("/predict", json=PAYLOAD).status_code == 200
+        assert secured_client.post("/predict", json=PAYLOAD).status_code == 200
         assert secured_client.post("/predict", json=PAYLOAD).status_code == 429
 
     def test_rate_limit_disabled(self, secured_client, monkeypatch):
         monkeypatch.setattr(settings, "rate_limit_per_minute", 0)
-        headers = {"X-API-Key": TEST_KEY}
         for _ in range(10):
-            assert secured_client.post("/predict", json=PAYLOAD, headers=headers).status_code == 200
+            assert secured_client.post("/predict", json=PAYLOAD).status_code == 200
 
 
 class TestSlidingWindowUnit:

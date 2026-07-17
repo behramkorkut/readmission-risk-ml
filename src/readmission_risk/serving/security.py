@@ -1,18 +1,21 @@
 """Sécurité de l'API : authentification par clé + limitation de débit.
 
 **Auth (clé API).** Dès que `settings.api_key` est défini (variable d'env `API_KEY`),
-`/predict` exige l'en-tête `X-API-Key` : 401 si absente, 403 si invalide. La
-comparaison se fait en temps constant (`hmac.compare_digest`) pour ne pas fuiter
-la clé via les temps de réponse (timing attack). Tant qu'aucune clé n'est
-configurée, l'accès reste libre — choix assumé pour la démo publique (Streamlit) ;
-`/health` reste public dans tous les cas (sondes de supervision).
+les endpoints d'ops (`/monitoring/summary`) exigent l'en-tête `X-API-Key` : 401 si
+absente, 403 si invalide. La comparaison se fait en temps constant
+(`hmac.compare_digest`) pour ne pas fuiter la clé via les temps de réponse.
+`/predict` reste PUBLIC (démo portfolio : un recruteur doit pouvoir tester) — sa
+protection est le rate limiting ; sur des données de santé réelles, on ajouterait
+cette même dépendance à `/predict` en une ligne. `/health` et `/ready` restent
+publics dans tous les cas (sondes de supervision).
 
 **Rate limiting.** Fenêtre glissante en mémoire, par IP client : au-delà de
 `settings.rate_limit_per_minute` requêtes / 60 s -> 429 + en-tête `Retry-After`
 (0 = désactivé). Limitation assumée : l'état est par processus — correct pour un
 déploiement mono-worker (notre VPS) ; en multi-workers il faudrait un backend
 partagé (Redis). Derrière un reverse proxy (nginx), l'IP vue est celle du proxy :
-lancer uvicorn avec `--proxy-headers` pour propager l'IP réelle.
+lancer uvicorn avec `--proxy-headers` pour propager l'IP réelle (fait dans le
+Dockerfile).
 """
 
 from __future__ import annotations

@@ -17,5 +17,8 @@ reports/
 .github/
 journal/
 
+# Secrets locaux — JAMAIS dans l'image (passés au runtime via --env-file)
+.env
+
 # NB : on GARDE models/ (le model.joblib est embarqué dans l'image)
 # et README.md (requis par le build du paquet).

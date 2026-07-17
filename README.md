@@ -161,15 +161,15 @@ curl -X POST http://localhost:8000/predict -H "Content-Type: application/json" \
 }
 ```
 
-**Sécurité** (optionnelle, activée par `.env`) : si `API_KEY` est défini, `/predict`
-exige l'en-tête `X-API-Key` (401/403 sinon ; `/health` reste public) ; le débit est
-plafonné à `RATE_LIMIT_PER_MINUTE` requêtes/min par IP (429 + `Retry-After`, 0 = off).
-Sans `API_KEY`, l'API reste ouverte pour la démo. Exemple avec clé :
+**Sécurité** : `/predict` est **public** (démo portfolio — testable sans clé) et
+protégé par le **rate limiting** : `RATE_LIMIT_PER_MINUTE` requêtes/min par IP
+(429 + `Retry-After`, défaut 60, 0 = off). Les endpoints d'ops sont, eux, protégés :
+si `API_KEY` est défini, `GET /monitoring/summary` exige l'en-tête `X-API-Key`
+(401/403 sinon). `/health` et `/ready` restent publics (sondes). Sur des données de
+santé réelles, on ajouterait `Security(require_api_key)` à `/predict` (une ligne) :
 
 ```bash
-curl -X POST http://localhost:8000/predict -H "Content-Type: application/json" \
-  -H "X-API-Key: $API_KEY" \
-  -d '{"features":{"age":"[70-80)","number_inpatient":3,"number_diagnoses":9}}'
+curl https://api-readmission.wisty.fr/monitoring/summary -H "X-API-Key: $API_KEY"
 ```
 
 **Sondes** : `GET /health` = vivacité (léger, le processus tourne) ; `GET /ready` =
