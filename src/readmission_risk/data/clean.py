@@ -109,11 +109,13 @@ def main() -> None:
     """CLI : charge le brut, nettoie, sauvegarde le Parquet nettoyé."""
     from readmission_risk.common.config import settings
     from readmission_risk.data.loaders import load_raw
+    from readmission_risk.data.manifest import record_artifact
 
     df = clean(load_raw())
     out = settings.data_dir / settings.clean_filename
     df.to_parquet(out, index=False)
     log.info("clean.saved", path=str(out), shape=list(df.shape))
+    record_artifact(out, produced_by="readmission-clean")  # traçabilité (manifeste SHA-256)
 
 
 if __name__ == "__main__":

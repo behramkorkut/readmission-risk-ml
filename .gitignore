@@ -15,6 +15,7 @@ wheels/
 # Données (volumineuses, non versionnées) — on garde le dossier vide
 data/*
 !data/.gitkeep
+!data/manifest.json
 
 # Modèles entraînés
 models/*

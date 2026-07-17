@@ -141,6 +141,7 @@ uv run readmission-explain        # 6. SHAP + audit d'équité -> reports/
 uv run readmission-dca            # 7. courbe de décision (utilité clinique) -> reports/
 uv run readmission-drift          # 8. monitoring de dérive -> reports/drift_report.html
 uv run readmission-serve          # 9. API de scoring -> http://localhost:8000/docs
+uv run readmission-data-verify    # intégrité des données : hash SHA-256 vs data/manifest.json (versionné)
 ```
 
 Suivi des expériences : `uv run mlflow ui --backend-store-uri sqlite:///mlflow.db`

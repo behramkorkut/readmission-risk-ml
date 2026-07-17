@@ -14,6 +14,7 @@ import structlog
 from ucimlrepo import fetch_ucirepo
 
 from readmission_risk.common.config import settings
+from readmission_risk.data.manifest import load_manifest, record_artifact
 
 log = structlog.get_logger()
 
@@ -32,11 +33,16 @@ def ingest(force: bool = False) -> Path:
     out = settings.data_dir / settings.raw_filename
     if out.exists() and not force:
         log.info("ingest.skip", path=str(out))
+        # Self-healing : un artefact présent mais jamais enregistré (ex. produit
+        # avant l'introduction du manifeste) est rattrapé sans re-téléchargement.
+        if out.name not in load_manifest()["artifacts"]:
+            record_artifact(out, produced_by="readmission-ingest")
         return out
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     df = download_raw()
     df.to_parquet(out, index=False)
     log.info("ingest.done", path=str(out), rows=len(df), cols=df.shape[1])
+    record_artifact(out, produced_by="readmission-ingest")  # traçabilité (manifeste SHA-256)
     return out
 
 

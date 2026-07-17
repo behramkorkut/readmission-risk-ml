@@ -37,6 +37,7 @@ dependencies = [
 [project.scripts]
 readmission-ingest = "readmission_risk.data.ingest:main"
 readmission-clean = "readmission_risk.data.clean:main"
+readmission-data-verify = "readmission_risk.data.manifest:main"
 readmission-train-baseline = "readmission_risk.modeling.baseline:main"
 readmission-train-gboost = "readmission_risk.modeling.gboost:main"
 readmission-calibrate = "readmission_risk.modeling.calibrate:main"
