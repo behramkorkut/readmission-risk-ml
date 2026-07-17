@@ -176,6 +176,12 @@ curl -X POST http://localhost:8000/predict -H "Content-Type: application/json" \
 disponibilité réelle (modèle chargé + prédiction factice + mémoire RSS, 503 sinon) —
 à brancher sur les probes liveness/readiness d'un orchestrateur.
 
+**Monitoring** : `GET /monitoring/summary?window_hours=24` (clé API requise) agrège les
+prédictions servies — volume, distribution du risque, latences, taux d'incertitude
+conformelle ; seules les sorties sont journalisées (SQLite `data/predictions_log.db`),
+jamais les features. L'onglet « Monitoring production » de la démo Streamlit l'affiche
+(secrets `MONITORING_API_URL` / `MONITORING_API_KEY` à configurer sur Streamlit Cloud).
+
 ##  Docker
 
 ```bash

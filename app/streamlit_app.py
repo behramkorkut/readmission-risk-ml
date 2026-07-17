@@ -2,6 +2,8 @@
 
 Score de risque calibré + ensemble de prédiction conformel + raisons SHAP,
 sur le modèle produit par `readmission-calibrate` (models/model.joblib).
+Section « Monitoring production » : consomme GET /monitoring/summary de l'API
+de production (configurable par secrets/env, état dégradé gracieux).
 
 La logique de prédiction est identique à l'API FastAPI (serving/api.py) ;
 cette app n'est qu'une vitrine interactive au-dessus du même bundle.
@@ -12,6 +14,7 @@ dépendances dans requirements.txt.
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -26,11 +29,33 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parents[1]  # racine du repo (app/ est un sous-dossier)
 sys.path.insert(0, str(ROOT / "src"))
 
+from readmission_risk.monitoring.client import fetch_monitoring_summary  # noqa: E402
+
 MODEL_PATH = ROOT / "models" / "model.joblib"
 LABELS = {0: "non réadmis", 1: "réadmission < 30 j"}
 PREVALENCE = 0.114  # taux de base de la classe positive (test hold-out)
 
 st.set_page_config(page_title="Readmission Risk — démo", page_icon="🏥", layout="wide")
+
+
+def _secret(name: str) -> str | None:
+    """Valeur depuis st.secrets (Streamlit Cloud) ou l'environnement, sinon None."""
+    try:
+        val = st.secrets.get(name)
+    except Exception:  # pas de secrets.toml en local -> variables d'environnement
+        val = None
+    return val or os.environ.get(name)
+
+
+# API de production monitorée (audit n°6) — surcharge possible par secrets/env.
+MONITORING_API_URL = _secret("MONITORING_API_URL") or "https://api-readmission.wisty.fr"
+MONITORING_API_KEY = _secret("MONITORING_API_KEY")
+
+
+@st.cache_data(ttl=60, show_spinner=False)
+def _cached_summary(api_url: str, api_key: str | None, window_hours: float) -> dict | None:
+    """Résumé de monitoring, mis en cache 60 s pour ne pas solliciter l'API à chaque rerun."""
+    return fetch_monitoring_summary(api_url, api_key, window_hours)
 
 
 # ---------- Chargement (une seule fois) ----------
@@ -228,6 +253,56 @@ with col2:
         st.pyplot(fig)
         st.caption("Rouge : pousse vers la réadmission · Vert : la rend moins probable. "
                    "Contributions du modèle LightGBM sous-jacent (avant calibration).")
+
+# ---------- Monitoring production (audit n°6) ----------
+st.divider()
+with st.expander("📊 Monitoring production — comportement de l'API de scoring", expanded=False):
+    st.caption(
+        "Prédictions servies par l'API FastAPI de production (VPS OVHcloud). Agrégats anonymisés : "
+        "seules les sorties du modèle (risque, ensemble conformel, latence) sont journalisées — "
+        "jamais les données patient."
+    )
+    window = st.selectbox(
+        "Fenêtre d'observation",
+        [1, 24, 24 * 7],
+        index=1,
+        format_func=lambda h: f"{h} h" if h < 24 else f"{h // 24} j",
+    )
+    summary = _cached_summary(MONITORING_API_URL, MONITORING_API_KEY, float(window))
+    if summary is None:
+        st.info(
+            "Monitoring indisponible — API injoignable ou clé non configurée "
+            "(secrets `MONITORING_API_URL` / `MONITORING_API_KEY`)."
+        )
+    elif summary["n_predictions"] == 0:
+        st.info(f"Aucune prédiction servie sur les {window} dernières heures.")
+    else:
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Prédictions", summary["n_predictions"])
+        m2.metric(
+            "Risque moyen",
+            f"{summary['risk']['mean']:.1%}",
+            delta=f"{summary['risk']['mean'] - PREVALENCE:+.1%} vs taux de base",
+            delta_color="inverse",
+        )
+        m3.metric("Latence p95", f"{summary['latency_ms']['p95']:.0f} ms")
+        m4.metric(
+            "Incertitude",
+            f"{summary['uncertainty_rate']:.1%}",
+            help="Part d'ensembles conformels à 2 classes (le modèle ne tranche pas)",
+        )
+        hist = summary["risk"]["histogram"]
+        edges, counts = hist["bin_edges"], hist["counts"]
+        chart = pd.DataFrame(
+            {"prédictions": counts},
+            index=[f"{a:.1f}–{b:.1f}" for a, b in zip(edges[:-1], edges[1:], strict=True)],
+        )
+        st.bar_chart(chart)
+        st.caption(
+            f"Distribution des risques servis · borne d'erreur attendue (garantie conformelle) : "
+            f"{summary['expected_error_bound']:.0%} · latence moyenne {summary['latency_ms']['mean']:.0f} ms · "
+            f"fenêtre de {summary['window_hours']:.0f} h."
+        )
 
 st.divider()
 st.markdown(
