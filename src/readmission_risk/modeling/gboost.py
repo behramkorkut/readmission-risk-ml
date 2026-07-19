@@ -79,9 +79,7 @@ def tune(X, y, groups, numeric, categorical, scale_pos_weight, n_trials, folds, 
         scores = grouped_cv_scores(pipe, X, y, groups, n_splits=folds, seed=seed)
         return float(scores["test_pr_auc"].mean())
 
-    study = optuna.create_study(
-        direction="maximize", sampler=optuna.samplers.TPESampler(seed=seed)
-    )
+    study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler(seed=seed))
     study.optimize(objective, n_trials=n_trials, show_progress_bar=False)
     return study
 
@@ -104,8 +102,15 @@ def main() -> None:
         scale_pos_weight=round(scale_pos_weight, 2),
     )
     study = tune(
-        X, y, groups, numeric, categorical, scale_pos_weight,
-        settings.lgbm_n_trials, settings.tuning_cv_folds, settings.random_seed,
+        X,
+        y,
+        groups,
+        numeric,
+        categorical,
+        scale_pos_weight,
+        settings.lgbm_n_trials,
+        settings.tuning_cv_folds,
+        settings.random_seed,
     )
     best = study.best_params
 
@@ -125,13 +130,15 @@ def main() -> None:
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
     mlflow.set_experiment(settings.experiment_name)
     with mlflow.start_run(run_name="lightgbm-optuna"):
-        mlflow.log_params({
-            "model": "LightGBM",
-            "scale_pos_weight": round(scale_pos_weight, 3),
-            "n_trials": settings.lgbm_n_trials,
-            "tuning_folds": settings.tuning_cv_folds,
-            **best,
-        })
+        mlflow.log_params(
+            {
+                "model": "LightGBM",
+                "scale_pos_weight": round(scale_pos_weight, 3),
+                "n_trials": settings.lgbm_n_trials,
+                "tuning_folds": settings.tuning_cv_folds,
+                **best,
+            }
+        )
         mlflow.log_metrics(summary)
         mlflow.log_metric("tuning_best_pr_auc", float(study.best_value))
     log.info("gboost.done", **{k: round(v, 4) for k, v in summary.items()})

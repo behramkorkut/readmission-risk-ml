@@ -18,6 +18,15 @@
       "produced_by": "readmission-clean",
       "produced_at_utc": "2026-07-17T13:24:36+00:00",
       "code_git_sha": "d514d38"
+    },
+    "model.joblib": {
+      "sha256": "9de8b8505f1645c2fd02fab29b1e94e3e31c4049e436987821f15498148d4407",
+      "size_bytes": 6188912,
+      "kind": "model",
+      "relpath": "models/model.joblib",
+      "produced_by": "readmission-calibrate",
+      "produced_at_utc": "2026-07-19T02:07:25+00:00",
+      "code_git_sha": "1bba518"
     }
   }
 }

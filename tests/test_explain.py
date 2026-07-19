@@ -7,10 +7,12 @@ from readmission_risk.evaluation.explain import subgroup_metrics
 
 
 def test_subgroup_metrics_structure_et_valeurs():
-    df = pd.DataFrame({
-        "gender": ["M", "M", "F", "F", "F", "M"],
-        "readmitted_30d": [1, 0, 1, 0, 1, 0],
-    })
+    df = pd.DataFrame(
+        {
+            "gender": ["M", "M", "F", "F", "F", "M"],
+            "readmitted_30d": [1, 0, 1, 0, 1, 0],
+        }
+    )
     proba = np.array([0.9, 0.2, 0.8, 0.3, 0.7, 0.1])
     out = subgroup_metrics(df, "readmitted_30d", proba, ["gender"])
 

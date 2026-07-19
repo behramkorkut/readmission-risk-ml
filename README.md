@@ -11,7 +11,7 @@ de la donnée hospitalière brute et imparfaite à une API de scoring **calibré
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![uv](https://img.shields.io/badge/packaging-uv-DE5FE9?logo=astral&logoColor=white)
 ![Ruff](https://img.shields.io/badge/lint-ruff-261230?logo=ruff&logoColor=white)
-![pytest](https://img.shields.io/badge/tests-85%20passed-0A9EDC?logo=pytest&logoColor=white)
+![pytest](https://img.shields.io/badge/tests-107%20passed-0A9EDC?logo=pytest&logoColor=white)
 
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-F7931E?logo=scikitlearn&logoColor=white)
 ![LightGBM](https://img.shields.io/badge/LightGBM-gradient%20boosting-9ACD32)
@@ -218,7 +218,7 @@ Coût total : **4,49 € HT/mois**.
 
 ```bash
 uv run ruff check .       # lint
-uv run pytest -q          # 85 tests (validés aussi en CI à chaque push)
+uv run pytest -q          # 107 tests (validés aussi en CI à chaque push)
 ```
 
 - **Unitaires & propriétés** : anti-fuite (split par patient), contrat de données (Pandera),
@@ -230,6 +230,27 @@ uv run pytest -q          # 85 tests (validés aussi en CI à chaque push)
   exécutée sur un dataset synthétique hermétique (aucun réseau, MLflow et disque isolés).
 - **Ops** : manifeste de données (SHA-256, détection de dérive), journal de monitoring
   (privacy-by-design : aucune feature patient journalisée).
+- **Durcissement API** : validation métier des entrées `/predict` (422 sur valeurs
+  aberrantes), erreurs structurées (503/500), intégrité du modèle vérifiée au
+  démarrage (SHA-256), warning explicite si l'auth est désactivée (mode démo).
+
+### Audit indépendant
+
+Le projet a fait l'objet d'un **audit indépendant en deux passes** (revue de code +
+**exécution réelle** : probes adversariaux sur l'API et la validation anti-fuite),
+suivi de correctifs vérifiés un à un. **Note finale : 18,5/20.**
+
+| Garantie | Vérifiée à l'exécution |
+|---|---|
+| Anti-fuite : split patient-disjoint, preprocessing refit dans chaque fold, retrait décès/soins palliatifs, 3 jeux fit/calib/conform disjoints | ✅ code + tests |
+| API : clé (comparaison en temps constant), rate limiting par IP, 401/403/429 + `Retry-After` | ✅ mesurés en exécution |
+| Validation métier `/predict` (plages réelles du dataset) → 422 sur aberrations | ✅ probe dédié |
+| Readiness réelle (smoke test + mémoire) ; erreurs structurées, jamais de stacktrace | ✅ probe dédié |
+| Manifeste SHA-256 des données **et du modèle**, vérifié au démarrage | ✅ hash recalculés |
+
+> Limites assumées et documentées : clés inconnues tolérées sur `/predict` (contrat
+> historique), auth désactivée par défaut pour la démo publique (WARNING au
+> démarrage si `API_KEY` absente), `mypy` non configuré.
 
 ##  Structure
 
@@ -246,7 +267,7 @@ readmission-risk-ml/
 │   ├── serving/     # API FastAPI + sécurité (clé API, rate limiting)
 │   └── monitoring/  # drift (Evidently) + journal des prédictions servies (SQLite)
 ├── app/             # démo Streamlit (vitrine + onglet monitoring production)
-├── tests/           # 85 tests : unitaires, propriétés, intégration HTTP, end-to-end
+├── tests/           # 107 tests : unitaires, propriétés, intégration HTTP, end-to-end
 ├── reports/         # graphiques (calibration, SHAP, DCA) + rapport de drift interactif
 ├── docs/deployment.md # déploiement production (VPS OVH, nginx, TLS, durcissement)
 ├── CHANGELOG.md     # historique des versions (Keep a Changelog, semver)

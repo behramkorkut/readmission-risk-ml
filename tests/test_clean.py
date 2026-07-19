@@ -35,17 +35,19 @@ def test_icd9_grouping():
 
 
 def test_clean_end_to_end():
-    df = pd.DataFrame({
-        "discharge_disposition_id": [1, 11],          # 2e = décès -> retiré
-        "gender": ["Male", "Female"],
-        "diag_1": ["250.5", "428"],
-        "diag_2": ["?", "486"],
-        "diag_3": ["V45", "?"],
-        "weight": ["?", "[50-75)"],
-        "readmitted": ["<30", "NO"],
-    })
+    df = pd.DataFrame(
+        {
+            "discharge_disposition_id": [1, 11],  # 2e = décès -> retiré
+            "gender": ["Male", "Female"],
+            "diag_1": ["250.5", "428"],
+            "diag_2": ["?", "486"],
+            "diag_3": ["V45", "?"],
+            "weight": ["?", "[50-75)"],
+            "readmitted": ["<30", "NO"],
+        }
+    )
     out = clean(df)
-    assert len(out) == 1                       # le séjour décès est retiré
+    assert len(out) == 1  # le séjour décès est retiré
     assert out.loc[0, "readmitted_30d"] == 1
     assert "weight" not in out.columns
     assert "diag_1" not in out.columns and "diag_1_group" in out.columns

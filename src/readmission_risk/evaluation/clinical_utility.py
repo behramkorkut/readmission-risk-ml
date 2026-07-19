@@ -37,17 +37,13 @@ log = structlog.get_logger()
 THRESHOLDS = np.arange(0.01, 0.51, 0.01)
 
 
-def compute_decision_curve(
-    y_true: np.ndarray, proba: np.ndarray, thresholds: np.ndarray = THRESHOLDS
-) -> pd.DataFrame:
+def compute_decision_curve(y_true: np.ndarray, proba: np.ndarray, thresholds: np.ndarray = THRESHOLDS) -> pd.DataFrame:
     """Bénéfice net du modèle vs « all » vs « none », par seuil de décision.
 
     Renvoie le DataFrame long de `dcurves` : colonnes `model` (model/all/none),
     `threshold`, `net_benefit`.
     """
-    data = pd.DataFrame(
-        {"outcome": np.asarray(y_true).astype(int), "model": np.asarray(proba, dtype=float)}
-    )
+    data = pd.DataFrame({"outcome": np.asarray(y_true).astype(int), "model": np.asarray(proba, dtype=float)})
     return dca(data=data, outcome="outcome", modelnames=["model"], thresholds=thresholds)
 
 
@@ -56,11 +52,12 @@ def summarize(curve: pd.DataFrame, at: tuple[float, ...] = (0.10, 0.15, 0.20)) -
     rows = []
     for t in at:
         sub = curve[np.isclose(curve["threshold"], t)]
-        rows.append({
-            "seuil": t,
-            **{m: float(sub.loc[sub["model"] == m, "net_benefit"].iloc[0])
-               for m in ("model", "all", "none")},
-        })
+        rows.append(
+            {
+                "seuil": t,
+                **{m: float(sub.loc[sub["model"] == m, "net_benefit"].iloc[0]) for m in ("model", "all", "none")},
+            }
+        )
     return pd.DataFrame(rows)
 
 

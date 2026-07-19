@@ -50,7 +50,7 @@ RAW_SCHEMA = pa.DataFrameSchema(
         "readmitted": pa.Column(str, pa.Check.isin(READMITTED), nullable=False),
     },
     strict=False,  # tolère les colonnes non déclarées
-    coerce=True,   # harmonise les types (robuste aux dtypes string/Arrow de pandas 3)
+    coerce=True,  # harmonise les types (robuste aux dtypes string/Arrow de pandas 3)
     name="diabetes_raw",
 )
 

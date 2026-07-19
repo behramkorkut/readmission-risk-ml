@@ -22,10 +22,9 @@ from readmission_risk.serving import api
 @pytest.fixture
 def loaded(tmp_path, monkeypatch):
     rng = np.random.default_rng(0)
-    df = pd.DataFrame([
-        {"num1": (x := rng.normal()), "cat1": str(rng.choice(["A", "B", "C"])), "y": int(x > 0.3)}
-        for _ in range(400)
-    ])
+    df = pd.DataFrame(
+        [{"num1": (x := rng.normal()), "cat1": str(rng.choice(["A", "B", "C"])), "y": int(x > 0.3)} for _ in range(400)]
+    )
     cols = ["num1", "cat1"]
     spw = float((df["y"] == 0).sum() / max((df["y"] == 1).sum(), 1))
 
@@ -33,13 +32,21 @@ def loaded(tmp_path, monkeypatch):
     cal = CalibratedClassifierCV(FrozenEstimator(base), method="sigmoid").fit(df[cols], df["y"])
     scc = SplitConformalClassifier(
         estimator=DataFrameAdapter(cal, cols),
-        confidence_level=0.9, conformity_score="lac", prefit=True,
+        confidence_level=0.9,
+        conformity_score="lac",
+        prefit=True,
     )
     scc.conformalize(df[cols], df["y"])
 
     joblib.dump(
-        {"model": cal, "conformal": scc, "base_pipeline": base, "feature_cols": cols,
-         "confidence_level": 0.9, "calibration_method": "sigmoid"},
+        {
+            "model": cal,
+            "conformal": scc,
+            "base_pipeline": base,
+            "feature_cols": cols,
+            "confidence_level": 0.9,
+            "calibration_method": "sigmoid",
+        },
         tmp_path / "model.joblib",
     )
     monkeypatch.setattr(settings, "models_dir", tmp_path)

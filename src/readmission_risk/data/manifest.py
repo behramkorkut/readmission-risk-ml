@@ -86,6 +86,69 @@ def record_artifact(path: Path, produced_by: str) -> dict:
     return entry
 
 
+def _store_path(path: Path) -> str:
+    """Chemin à enregistrer : relatif à la racine du projet si possible, absolu sinon.
+
+    Le relatif est préféré (manifeste versionné, chemins portables) ; l'absolu est
+    le repli pour les artefacts hors racine (tests, déploiements exotiques).
+    """
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(PROJECT_ROOT))
+    except ValueError:
+        return str(resolved)
+
+
+def _resolve_stored(stored: str) -> Path:
+    """Résout un chemin enregistré : absolu tel quel, relatif contre la racine projet."""
+    path = Path(stored)
+    return path if path.is_absolute() else PROJECT_ROOT / path
+
+
+def record_model_artifact(path: Path, produced_by: str) -> dict:
+    """Enregistre un artefact MODÈLE (joblib, hors data_dir) dans le même manifeste.
+
+    Même exigence de traçabilité que pour les données (audit : le pickle servi par
+    l'API doit être vérifiable). Pas de métadonnées Parquet : hash + taille, et
+    `relpath` pour que `verify()` et l'API localisent l'artefact.
+    """
+    entry = {
+        "sha256": sha256_file(path),
+        "size_bytes": path.stat().st_size,
+        "kind": "model",
+        "relpath": _store_path(path),
+        "produced_by": produced_by,
+        "produced_at_utc": datetime.now(UTC).isoformat(timespec="seconds"),
+        "code_git_sha": git_short_sha(),
+    }
+    manifest = load_manifest()
+    manifest["artifacts"][path.name] = entry
+    _manifest_path().write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    log.info("manifest.recorded", file=path.name, sha256=entry["sha256"][:12], kind="model")
+    return entry
+
+
+def find_model_entry(path: Path) -> dict | None:
+    """Entrée de manifeste correspondant à CET artefact modèle (par chemin résolu).
+
+    La résolution par chemin (et non par nom) évite les faux positifs quand un
+    modèle jouet porte le même nom de fichier (tests hors de la racine projet).
+    """
+    resolved = path.resolve()
+    for entry in load_manifest()["artifacts"].values():
+        if entry.get("kind") == "model" and entry.get("relpath"):
+            if _resolve_stored(entry["relpath"]).resolve() == resolved:
+                return entry
+    return None
+
+
+def _artifact_path(name: str, entry: dict) -> Path:
+    """Localise l'artefact : `relpath` (artefacts hors data_dir, ex. modèles) sinon data_dir."""
+    if entry.get("relpath"):
+        return _resolve_stored(entry["relpath"])
+    return settings.data_dir / name
+
+
 def verify() -> list[tuple[str, str, str]]:
     """Recalcule les hash et compare au manifeste.
 
@@ -93,11 +156,13 @@ def verify() -> list[tuple[str, str, str]]:
     """
     results: list[tuple[str, str, str]] = []
     for name, entry in load_manifest()["artifacts"].items():
-        path = settings.data_dir / name
+        path = _artifact_path(name, entry)
         if not path.exists():
             results.append((name, "ABSENT", "fichier manquant"))
         elif (current := sha256_file(path)) != entry["sha256"]:
             results.append((name, "MODIFIÉ", f"hash actuel {current[:12]}… ≠ manifeste {entry['sha256'][:12]}…"))
+        elif entry.get("kind") == "model":
+            results.append((name, "OK", f"{entry['size_bytes']} octets, produit par {entry['produced_by']}"))
         else:
             results.append((name, "OK", f"{entry['rows']} lignes, produit par {entry['produced_by']}"))
     return results

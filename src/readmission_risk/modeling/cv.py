@@ -21,9 +21,7 @@ from sklearn.model_selection import StratifiedGroupKFold, cross_validate
 
 # Warning bénin : la matrice creuse issue du ColumnTransformer n'a pas de noms de
 # colonnes, ce que LightGBM signale à la prédiction. Aucun impact -> on le tait.
-warnings.filterwarnings(
-    "ignore", message="X does not have valid feature names", category=UserWarning
-)
+warnings.filterwarnings("ignore", message="X does not have valid feature names", category=UserWarning)
 
 SCORING = {
     "pr_auc": "average_precision",
@@ -43,7 +41,9 @@ def grouped_cv_scores(
     """Lance la CV groupée et renvoie le dict de scores (un tableau par métrique)."""
     cv = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=seed)
     return cross_validate(
-        estimator, X, y,
+        estimator,
+        X,
+        y,
         groups=groups,
         cv=cv,
         scoring=SCORING,

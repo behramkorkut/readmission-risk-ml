@@ -38,8 +38,8 @@ class Settings(BaseSettings):
     test_size: float = 0.2  # part du jeu de test (hold-out), patient-disjoint
 
     # --- Tuning LightGBM (étape 6) ---
-    lgbm_n_trials: int = 25     # nb d'essais Optuna (réduire pour aller plus vite)
-    tuning_cv_folds: int = 3    # folds pendant le tuning (5 folds pour l'éval finale)
+    lgbm_n_trials: int = 25  # nb d'essais Optuna (réduire pour aller plus vite)
+    tuning_cv_folds: int = 3  # folds pendant le tuning (5 folds pour l'éval finale)
 
     # --- Calibration & conformal (étape 7) ---
     conformal_confidence: float = 0.9  # couverture cible des ensembles de prédiction
@@ -54,7 +54,7 @@ class Settings(BaseSettings):
 
     # --- Monitoring / drift (étape 10) ---
     monitoring_sample: int = 5000  # taille des échantillons réf/courant pour le rapport
-    drift_threshold: float = 0.2   # part de colonnes driftées -> déclenche un ré-entraînement
+    drift_threshold: float = 0.2  # part de colonnes driftées -> déclenche un ré-entraînement
 
     # --- Monitoring des prédictions servies (audit n°6) ---
     predictions_log_filename: str = "predictions_log.db"  # journal SQLite (dans data_dir)

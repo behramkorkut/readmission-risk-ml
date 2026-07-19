@@ -32,6 +32,7 @@ from sklearn.metrics import brier_score_loss
 
 from readmission_risk.common.config import settings
 from readmission_risk.data.loaders import load_clean
+from readmission_risk.data.manifest import record_model_artifact
 from readmission_risk.data.split import make_holdout_split
 from readmission_risk.features.build import build_feature_spec
 from readmission_risk.modeling.gboost import DEFAULT_LGBM_PARAMS, build_pipeline
@@ -105,9 +106,7 @@ def main() -> None:
     train, test = make_holdout_split(
         df, settings.target_col, settings.patient_id_col, settings.test_size, settings.random_seed
     )
-    fit, calib, conform = three_way_split(
-        train, settings.target_col, settings.patient_id_col, settings.random_seed
-    )
+    fit, calib, conform = three_way_split(train, settings.target_col, settings.patient_id_col, settings.random_seed)
     numeric, categorical, _ = build_feature_spec(fit, settings.target_col)
     cols = numeric + categorical
     y_fit = fit[settings.target_col]
@@ -166,15 +165,18 @@ def main() -> None:
     model_path = settings.models_dir / settings.model_filename
     joblib.dump(
         {
-            "model": best_model,          # modèle calibré (probabilités fiables)
-            "conformal": scc,             # ensembles de prédiction (incertitude)
-            "base_pipeline": base,        # pipeline brut (pour SHAP en temps réel)
+            "model": best_model,  # modèle calibré (probabilités fiables)
+            "conformal": scc,  # ensembles de prédiction (incertitude)
+            "base_pipeline": base,  # pipeline brut (pour SHAP en temps réel)
             "feature_cols": cols,
             "confidence_level": settings.conformal_confidence,
             "calibration_method": best_method,
         },
         model_path,
     )
+    # Traçabilité du modèle comme des données : hash SHA-256 dans le manifeste
+    # (l'API le contrôle au chargement et avertit en cas d'écart).
+    record_model_artifact(model_path, produced_by="readmission-calibrate")
 
     # --- MLflow ---
     import mlflow
@@ -182,12 +184,16 @@ def main() -> None:
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
     mlflow.set_experiment(settings.experiment_name)
     with mlflow.start_run(run_name="calibrated-conformal"):
-        mlflow.log_params({"calibration_method": best_method, "conformity_score": "lac",
-                           "confidence_level": settings.conformal_confidence})
+        mlflow.log_params(
+            {
+                "calibration_method": best_method,
+                "conformity_score": "lac",
+                "confidence_level": settings.conformal_confidence,
+            }
+        )
         mlflow.log_metrics({**results, "conformal_coverage": coverage, "conformal_set_size": mean_size})
         mlflow.log_artifact(str(curve_path))
-    log.info("calibrate.done", best_method=best_method, coverage=round(coverage, 3),
-             model_path=str(model_path))
+    log.info("calibrate.done", best_method=best_method, coverage=round(coverage, 3), model_path=str(model_path))
 
 
 if __name__ == "__main__":

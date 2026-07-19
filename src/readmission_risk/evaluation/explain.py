@@ -33,9 +33,7 @@ SUBGROUPS = ["gender", "age", "race"]
 MIN_GROUP_SIZE = 200  # on n'évalue les métriques que sur des groupes assez grands
 
 
-def subgroup_metrics(
-    df: pd.DataFrame, target_col: str, proba: np.ndarray, subgroups: list[str]
-) -> pd.DataFrame:
+def subgroup_metrics(df: pd.DataFrame, target_col: str, proba: np.ndarray, subgroups: list[str]) -> pd.DataFrame:
     """Calcule par sous-groupe : effectif, taux réel de positifs, risque moyen prédit, ROC-AUC."""
     rows = []
     for col in subgroups:
@@ -43,14 +41,16 @@ def subgroup_metrics(
             y = sub[target_col].to_numpy()
             p = proba[sub.index.to_numpy()]
             auc = roc_auc_score(y, p) if len(np.unique(y)) == 2 else float("nan")
-            rows.append({
-                "attribut": col,
-                "groupe": str(value),
-                "n": len(sub),
-                "taux_reel": round(float(y.mean()), 3),
-                "risque_moyen_predit": round(float(p.mean()), 3),
-                "roc_auc": round(float(auc), 3) if not np.isnan(auc) else None,
-            })
+            rows.append(
+                {
+                    "attribut": col,
+                    "groupe": str(value),
+                    "n": len(sub),
+                    "taux_reel": round(float(y.mean()), 3),
+                    "risque_moyen_predit": round(float(p.mean()), 3),
+                    "roc_auc": round(float(auc), 3) if not np.isnan(auc) else None,
+                }
+            )
     return pd.DataFrame(rows)
 
 
@@ -84,8 +84,7 @@ def main() -> None:
         shap_values = shap_values[1]
 
     # Importance globale (bar)
-    shap.summary_plot(shap_values, X_dense, feature_names=feat_names, plot_type="bar",
-                      max_display=15, show=False)
+    shap.summary_plot(shap_values, X_dense, feature_names=feat_names, plot_type="bar", max_display=15, show=False)
     plt.tight_layout()
     plt.savefig(settings.reports_dir / "shap_global.png", dpi=120, bbox_inches="tight")
     plt.close()
@@ -102,8 +101,11 @@ def main() -> None:
     contrib = shap_values[idx]
     top = np.argsort(np.abs(contrib))[-10:]
     plt.figure(figsize=(8, 5))
-    plt.barh([feat_names[i] for i in top], [contrib[i] for i in top],
-             color=["#c0392b" if contrib[i] > 0 else "#2980b9" for i in top])
+    plt.barh(
+        [feat_names[i] for i in top],
+        [contrib[i] for i in top],
+        color=["#c0392b" if contrib[i] > 0 else "#2980b9" for i in top],
+    )
     plt.axvline(0, color="k", lw=0.8)
     plt.title(f"Contributions SHAP — patient à risque {proba_sample[idx]:.0%}")
     plt.xlabel("Impact sur le log-odds (rouge = augmente le risque)")

@@ -13,7 +13,7 @@ def _df():
             "patient_nbr": [10, 20, 30, 40],
             "time_in_hospital": [3, 5, 2, 8],
             "race": ["Caucasian", "Asian", None, "Caucasian"],
-            "admission_type_id": [1, 1, 2, 3],   # code entier -> catégoriel
+            "admission_type_id": [1, 1, 2, 3],  # code entier -> catégoriel
             "examide": ["No", "No", "No", "No"],  # constante -> écartée
             "readmitted_30d": [0, 1, 0, 1],
         }

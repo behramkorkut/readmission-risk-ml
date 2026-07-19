@@ -30,10 +30,14 @@ def main() -> None:
         df, settings.target_col, settings.patient_id_col, settings.test_size, settings.random_seed
     )
     assert_no_group_overlap(train, test, settings.patient_id_col)  # garde-fou
-    print(f"Train : {len(train):>6} séjours | {train[settings.patient_id_col].nunique():>6} patients | "
-          f"taux+ {train[settings.target_col].mean():.1%}")
-    print(f"Test  : {len(test):>6} séjours | {test[settings.patient_id_col].nunique():>6} patients | "
-          f"taux+ {test[settings.target_col].mean():.1%}")
+    print(
+        f"Train : {len(train):>6} séjours | {train[settings.patient_id_col].nunique():>6} patients | "
+        f"taux+ {train[settings.target_col].mean():.1%}"
+    )
+    print(
+        f"Test  : {len(test):>6} séjours | {test[settings.patient_id_col].nunique():>6} patients | "
+        f"taux+ {test[settings.target_col].mean():.1%}"
+    )
     overlap = set(train[settings.patient_id_col]) & set(test[settings.patient_id_col])
     print(f"Patients communs train/test : {len(overlap)}  (doit être 0 — anti-fuite OK)")
 

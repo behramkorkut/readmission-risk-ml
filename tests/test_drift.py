@@ -12,13 +12,15 @@ from readmission_risk.monitoring.drift import (
 
 def _df(n=500):
     rng = np.random.default_rng(0)
-    return pd.DataFrame({
-        "time_in_hospital": rng.integers(1, 10, n),
-        "num_medications": rng.integers(1, 20, n),
-        "number_inpatient": rng.integers(0, 3, n),
-        "age": rng.choice(["[40-50)", "[50-60)", "[60-70)"], n),
-        "medical_specialty": rng.choice(["Cardiology", "Surgery"], n),
-    })
+    return pd.DataFrame(
+        {
+            "time_in_hospital": rng.integers(1, 10, n),
+            "num_medications": rng.integers(1, 20, n),
+            "number_inpatient": rng.integers(0, 3, n),
+            "age": rng.choice(["[40-50)", "[50-60)", "[60-70)"], n),
+            "medical_specialty": rng.choice(["Cardiology", "Surgery"], n),
+        }
+    )
 
 
 def test_inject_drift_shifts_distributions():

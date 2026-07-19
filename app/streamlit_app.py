@@ -109,18 +109,36 @@ def predict(state: dict[str, Any], features: dict[str, Any]) -> dict[str, Any]:
 PROFILES = {
     "— Personnaliser —": {},
     "Profil bas risque": {
-        "age": "[40-50)", "number_inpatient": 0, "number_emergency": 0,
-        "number_outpatient": 0, "time_in_hospital": 2, "num_medications": 8,
-        "number_diagnoses": 4, "num_lab_procedures": 35, "insulin": "No",
-        "diabetesMed": "No", "change": "No", "diag_1_group": "Musculoskeletal",
-        "discharge_disposition_id": 1, "admission_type_id": 3,
+        "age": "[40-50)",
+        "number_inpatient": 0,
+        "number_emergency": 0,
+        "number_outpatient": 0,
+        "time_in_hospital": 2,
+        "num_medications": 8,
+        "number_diagnoses": 4,
+        "num_lab_procedures": 35,
+        "insulin": "No",
+        "diabetesMed": "No",
+        "change": "No",
+        "diag_1_group": "Musculoskeletal",
+        "discharge_disposition_id": 1,
+        "admission_type_id": 3,
     },
     "Profil haut risque": {
-        "age": "[80-90)", "number_inpatient": 6, "number_emergency": 4,
-        "number_outpatient": 3, "time_in_hospital": 12, "num_medications": 28,
-        "number_diagnoses": 9, "num_lab_procedures": 75, "insulin": "Up",
-        "diabetesMed": "Yes", "change": "Ch", "diag_1_group": "Circulatory",
-        "discharge_disposition_id": 22, "admission_type_id": 1,
+        "age": "[80-90)",
+        "number_inpatient": 6,
+        "number_emergency": 4,
+        "number_outpatient": 3,
+        "time_in_hospital": 12,
+        "num_medications": 28,
+        "number_diagnoses": 9,
+        "num_lab_procedures": 75,
+        "insulin": "Up",
+        "diabetesMed": "Yes",
+        "change": "Ch",
+        "diag_1_group": "Circulatory",
+        "discharge_disposition_id": 22,
+        "admission_type_id": 1,
     },
 }
 
@@ -153,14 +171,25 @@ with st.sidebar:
     def dv(key, default):  # valeur du profil sinon défaut
         return d.get(key, default)
 
-    ages = ["[0-10)", "[10-20)", "[20-30)", "[30-40)", "[40-50)",
-            "[50-60)", "[60-70)", "[70-80)", "[80-90)", "[90-100)"]
+    ages = [
+        "[0-10)",
+        "[10-20)",
+        "[20-30)",
+        "[30-40)",
+        "[40-50)",
+        "[50-60)",
+        "[60-70)",
+        "[70-80)",
+        "[80-90)",
+        "[90-100)",
+    ]
     age = st.select_slider("Âge", ages, value=dv("age", "[60-70)"))
     gender = st.radio("Sexe", ["Female", "Male"], horizontal=True)
 
     st.subheader("Historique (12 derniers mois)")
-    number_inpatient = st.slider("Hospitalisations antérieures", 0, 10, dv("number_inpatient", 0),
-                                 help="Variable la plus prédictive (SHAP)")
+    number_inpatient = st.slider(
+        "Hospitalisations antérieures", 0, 10, dv("number_inpatient", 0), help="Variable la plus prédictive (SHAP)"
+    )
     number_emergency = st.slider("Passages aux urgences", 0, 10, dv("number_emergency", 0))
     number_outpatient = st.slider("Consultations externes", 0, 10, dv("number_outpatient", 0))
 
@@ -169,36 +198,72 @@ with st.sidebar:
     num_medications = st.slider("Médicaments administrés", 1, 40, dv("num_medications", 15))
     number_diagnoses = st.slider("Diagnostics posés", 1, 16, dv("number_diagnoses", 7))
     num_lab_procedures = st.slider("Actes de laboratoire", 1, 100, dv("num_lab_procedures", 45))
-    diag_1_group = st.selectbox("Diagnostic principal", ["Circulatory", "Respiratory", "Digestive",
-                                "Diabetes", "Injury", "Musculoskeletal", "Genitourinary",
-                                "Neoplasms", "Other"],
-                                index=["Circulatory", "Respiratory", "Digestive", "Diabetes",
-                                       "Injury", "Musculoskeletal", "Genitourinary", "Neoplasms",
-                                       "Other"].index(dv("diag_1_group", "Circulatory")))
-    admission_type_id = st.selectbox("Type d'admission", list(ADMISSION_TYPES),
-                                     format_func=ADMISSION_TYPES.get,
-                                     index=list(ADMISSION_TYPES).index(dv("admission_type_id", 1)))
-    discharge_disposition_id = st.selectbox("Sortie vers", list(DISCHARGES),
-                                            format_func=DISCHARGES.get,
-                                            index=list(DISCHARGES).index(dv("discharge_disposition_id", 1)))
+    diag_1_group = st.selectbox(
+        "Diagnostic principal",
+        [
+            "Circulatory",
+            "Respiratory",
+            "Digestive",
+            "Diabetes",
+            "Injury",
+            "Musculoskeletal",
+            "Genitourinary",
+            "Neoplasms",
+            "Other",
+        ],
+        index=[
+            "Circulatory",
+            "Respiratory",
+            "Digestive",
+            "Diabetes",
+            "Injury",
+            "Musculoskeletal",
+            "Genitourinary",
+            "Neoplasms",
+            "Other",
+        ].index(dv("diag_1_group", "Circulatory")),
+    )
+    admission_type_id = st.selectbox(
+        "Type d'admission",
+        list(ADMISSION_TYPES),
+        format_func=ADMISSION_TYPES.get,
+        index=list(ADMISSION_TYPES).index(dv("admission_type_id", 1)),
+    )
+    discharge_disposition_id = st.selectbox(
+        "Sortie vers",
+        list(DISCHARGES),
+        format_func=DISCHARGES.get,
+        index=list(DISCHARGES).index(dv("discharge_disposition_id", 1)),
+    )
 
     st.subheader("Traitement diabète")
-    insulin = st.selectbox("Insuline", ["No", "Steady", "Up", "Down"],
-                           index=["No", "Steady", "Up", "Down"].index(dv("insulin", "No")))
-    diabetesMed = st.radio("Antidiabétique prescrit", ["Yes", "No"], horizontal=True,
-                           index=["Yes", "No"].index(dv("diabetesMed", "Yes")))
-    change = st.radio("Changement de traitement", ["No", "Ch"], horizontal=True,
-                      index=["No", "Ch"].index(dv("change", "No")))
+    insulin = st.selectbox(
+        "Insuline", ["No", "Steady", "Up", "Down"], index=["No", "Steady", "Up", "Down"].index(dv("insulin", "No"))
+    )
+    diabetesMed = st.radio(
+        "Antidiabétique prescrit", ["Yes", "No"], horizontal=True, index=["Yes", "No"].index(dv("diabetesMed", "Yes"))
+    )
+    change = st.radio(
+        "Changement de traitement", ["No", "Ch"], horizontal=True, index=["No", "Ch"].index(dv("change", "No"))
+    )
     a1c = st.selectbox("HbA1c (A1Cresult)", ["Non mesurée", "Norm", ">7", ">8"])
 
 features = {
-    "age": age, "gender": gender,
-    "number_inpatient": number_inpatient, "number_emergency": number_emergency,
-    "number_outpatient": number_outpatient, "time_in_hospital": time_in_hospital,
-    "num_medications": num_medications, "number_diagnoses": number_diagnoses,
-    "num_lab_procedures": num_lab_procedures, "diag_1_group": diag_1_group,
-    "admission_type_id": admission_type_id, "discharge_disposition_id": discharge_disposition_id,
-    "insulin": insulin, "diabetesMed": diabetesMed, "change": change,
+    "age": age,
+    "gender": gender,
+    "number_inpatient": number_inpatient,
+    "number_emergency": number_emergency,
+    "number_outpatient": number_outpatient,
+    "time_in_hospital": time_in_hospital,
+    "num_medications": num_medications,
+    "number_diagnoses": number_diagnoses,
+    "num_lab_procedures": num_lab_procedures,
+    "diag_1_group": diag_1_group,
+    "admission_type_id": admission_type_id,
+    "discharge_disposition_id": discharge_disposition_id,
+    "insulin": insulin,
+    "diabetesMed": diabetesMed,
+    "change": change,
 }
 if a1c != "Non mesurée":
     features["A1Cresult"] = a1c
@@ -213,9 +278,12 @@ col1, col2 = st.columns([1, 1.4])
 
 with col1:
     st.subheader("Risque calibré")
-    st.metric("Probabilité de réadmission < 30 j", f"{risk:.1%}",
-              delta=f"{risk - PREVALENCE:+.1%} vs taux de base ({PREVALENCE:.1%})",
-              delta_color="inverse")
+    st.metric(
+        "Probabilité de réadmission < 30 j",
+        f"{risk:.1%}",
+        delta=f"{risk - PREVALENCE:+.1%} vs taux de base ({PREVALENCE:.1%})",
+        delta_color="inverse",
+    )
     st.progress(min(risk, 1.0))
     if risk >= 2 * PREVALENCE:
         st.error("Risque élevé — patient à prioriser pour un suivi post-sortie.")
@@ -230,10 +298,14 @@ with col1:
     if len(pset) == 1:
         st.info("Le modèle **tranche** : une seule classe dans l'ensemble, avec 90 % de couverture garantie.")
     else:
-        st.info("Le modèle **ne tranche pas** : les deux classes restent plausibles. "
-                "C'est une information clinique en soi — ce cas mérite un regard humain.")
-    st.caption("Probabilité calibrée par régression isotonique (Brier 0,225 → 0,097). "
-               "Ensemble conformel : couverture empirique ~90 % sur le test hold-out patient-disjoint.")
+        st.info(
+            "Le modèle **ne tranche pas** : les deux classes restent plausibles. "
+            "C'est une information clinique en soi — ce cas mérite un regard humain."
+        )
+    st.caption(
+        "Probabilité calibrée par régression isotonique (Brier 0,225 → 0,097). "
+        "Ensemble conformel : couverture empirique ~90 % sur le test hold-out patient-disjoint."
+    )
 
 with col2:
     st.subheader("Pourquoi ? (SHAP)")
@@ -244,15 +316,16 @@ with col2:
 
         fig, ax = plt.subplots(figsize=(7, 3.2))
         colors = ["#d62728" if v > 0 else "#2ca02c" for v in reasons["shap"]]
-        ax.barh(reasons["feature"][::-1], reasons["shap"][::-1],
-                color=colors[::-1])
+        ax.barh(reasons["feature"][::-1], reasons["shap"][::-1], color=colors[::-1])
         ax.axvline(0, color="#888", lw=0.8)
         ax.set_xlabel("Contribution SHAP (log-odds)")
         ax.spines[["top", "right"]].set_visible(False)
         fig.tight_layout()
         st.pyplot(fig)
-        st.caption("Rouge : pousse vers la réadmission · Vert : la rend moins probable. "
-                   "Contributions du modèle LightGBM sous-jacent (avant calibration).")
+        st.caption(
+            "Rouge : pousse vers la réadmission · Vert : la rend moins probable. "
+            "Contributions du modèle LightGBM sous-jacent (avant calibration)."
+        )
 
 # ---------- Monitoring production (audit n°6) ----------
 st.divider()

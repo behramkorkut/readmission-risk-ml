@@ -23,7 +23,11 @@ def test_grouped_cv_returns_expected_keys_and_lengths():
     df = _synthetic()
     scores = grouped_cv_scores(
         LogisticRegression(max_iter=200),
-        df[["x1", "x2"]], df["y"], groups=df["patient"], n_splits=3, seed=42,
+        df[["x1", "x2"]],
+        df["y"],
+        groups=df["patient"],
+        n_splits=3,
+        seed=42,
     )
     for key in ("test_pr_auc", "test_roc_auc", "test_neg_brier"):
         assert key in scores
@@ -34,7 +38,11 @@ def test_summarize_keys():
     df = _synthetic()
     scores = grouped_cv_scores(
         LogisticRegression(max_iter=200),
-        df[["x1", "x2"]], df["y"], groups=df["patient"], n_splits=3, seed=42,
+        df[["x1", "x2"]],
+        df["y"],
+        groups=df["patient"],
+        n_splits=3,
+        seed=42,
     )
     summary = summarize(scores)
     assert {"pr_auc_mean", "roc_auc_mean", "brier_mean"} <= set(summary)

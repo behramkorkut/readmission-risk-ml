@@ -58,14 +58,16 @@ def main() -> None:
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
     mlflow.set_experiment(settings.experiment_name)
     with mlflow.start_run(run_name="baseline-logreg"):
-        mlflow.log_params({
-            "model": "LogisticRegression",
-            "class_weight": "balanced",
-            "n_numeric": len(numeric),
-            "n_categorical": len(categorical),
-            "n_constant_dropped": len(constant),
-            "cv": "StratifiedGroupKFold(5)",
-        })
+        mlflow.log_params(
+            {
+                "model": "LogisticRegression",
+                "class_weight": "balanced",
+                "n_numeric": len(numeric),
+                "n_categorical": len(categorical),
+                "n_constant_dropped": len(constant),
+                "cv": "StratifiedGroupKFold(5)",
+            }
+        )
         mlflow.log_metrics(summary)
     log.info("baseline.done", **{k: round(v, 4) for k, v in summary.items()})
 
